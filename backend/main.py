@@ -73,6 +73,35 @@ async def _find_button(page: Page, label: str, exclude_class: str = ""):
             return btn
     return None
 
+async def _js_click(page: Page, selector: str):
+    """Chrome拡張と同じ方法でクリック（React対応）"""
+    await page.evaluate(f"""
+        (function() {{
+            const el = document.querySelector('{selector}');
+            if (!el) return;
+            ['mousedown','mouseup','click'].forEach(type =>
+                el.dispatchEvent(new MouseEvent(type, {{bubbles:true, cancelable:true, view:window}}))
+            );
+        }})()
+    """)
+
+async def _js_click_by_text(page: Page, text: str, exclude_class: str = ""):
+    """テキストでボタンを探してJSクリック"""
+    await page.evaluate(f"""
+        (function() {{
+            const btns = document.querySelectorAll('.styles_cmButton__Jcmwz');
+            for (const b of btns) {{
+                if (b.textContent.trim().includes('{text}') &&
+                    (!'{exclude_class}' || !b.className.includes('{exclude_class}'))) {{
+                    ['mousedown','mouseup','click'].forEach(t =>
+                        b.dispatchEvent(new MouseEvent(t, {{bubbles:true, cancelable:true, view:window}}))
+                    );
+                    return;
+                }}
+            }}
+        }})()
+    """)
+
 
 # ================================================================
 # 予約ステップ (content.js をそのまま Python 移植)
@@ -86,7 +115,7 @@ async def step2_select_store(page: Page):
     box = await _wait_selector(page, '.styles_masterStoreBox__TrvbV')
     if not box:
         raise Exception("ストアボックスが見つかりません")
-    await box.click()
+    await _js_click(page, '.styles_masterStoreBox__TrvbV')
     sels = await _wait_all(page, '.styles_cmSelect__9Ud3U', min_count=1)
     if not sels:
         raise Exception("日時選択セレクトが表示されません")
@@ -152,41 +181,34 @@ async def step4_click_proceed(page: Page):
     btn = await _find_button(page, "商品選択に進む")
     if not btn:
         raise Exception("「商品選択に進む」ボタンが見つかりません")
-    await btn.scroll_into_view_if_needed()
-    await asyncio.sleep(0.3)
-    await btn.click(force=True)
+    await _js_click_by_text(page, "商品選択に進む")
     await _wait_selector(page, '.styles_menuItem__g9RDF', timeout=12_000)
 
 async def step5_select_meal_item(page: Page):
     item = await _wait_selector(page, '.styles_menuItem__g9RDF')
     if not item:
         raise Exception("食事アイテムが見つかりません")
-    await item.scroll_into_view_if_needed()
-    await asyncio.sleep(0.3)
-    await item.click(force=True)
+    await _js_click(page, '.styles_menuItem__g9RDF')
     await asyncio.sleep(1)
 
 async def step6_add_to_cart(page: Page):
     btn = await _find_button(page, "カートに追加", exclude_class="footerBtn")
     if not btn:
         raise Exception("「カートに追加」ボタンが見つかりません")
-    await btn.scroll_into_view_if_needed()
-    await asyncio.sleep(0.3)
-    await btn.click(force=True)
+    await _js_click_by_text(page, "カートに追加", exclude_class="footerBtn")
     await _wait_selector(page, '.styles_footerBtn__E7fv0', timeout=10_000)
 
 async def step7_go_to_cart(page: Page):
-    footer_btns = await page.query_selector_all('.styles_footerBtn__E7fv0')
-    btn = None
-    for b in footer_btns:
-        if "カートを確認" in (await b.text_content() or ""):
-            btn = b
-            break
-    if not btn and footer_btns:
-        btn = footer_btns[0]
-    if not btn:
-        raise Exception("「カートを確認」ボタンが見つかりません")
-    await btn.click()
+    await _wait_selector(page, '.styles_footerBtn__E7fv0', timeout=10_000)
+    await page.evaluate("""
+        (function() {
+            const btns = document.querySelectorAll('.styles_footerBtn__E7fv0');
+            const btn = [...btns].find(b => b.textContent.includes('カートを確認')) ?? btns[0];
+            if (btn) ['mousedown','mouseup','click'].forEach(t =>
+                btn.dispatchEvent(new MouseEvent(t, {bubbles:true, cancelable:true, view:window}))
+            );
+        })()
+    """)
     await _wait_all(page, '.styles_inputWrapper__DFwnN', min_count=1, timeout=12_000)
 
 async def step8_fill_buyer_info(page: Page, login: LoginInfo):
@@ -209,14 +231,21 @@ async def step8_fill_buyer_info(page: Page, login: LoginInfo):
 async def step9_select_payment(page: Page):
     btn = await _wait_selector(page, '.styles_wrapper__ro2Qc', timeout=5_000)
     if btn:
-        await btn.click()
+        await page.evaluate("""
+            (function() {
+                const el = document.querySelector('.styles_wrapper__ro2Qc');
+                if (el) ['mousedown','mouseup','click'].forEach(t =>
+                    el.dispatchEvent(new MouseEvent(t, {bubbles:true, cancelable:true, view:window}))
+                );
+            })()
+        """)
         await asyncio.sleep(0.5)
 
 async def step10_confirm_order(page: Page):
     btn = await _find_button(page, "注文を確定")
     if not btn:
         raise Exception("「注文を確定」ボタンが見つかりません")
-    await btn.click()
+    await _js_click_by_text(page, "注文を確定")
     await asyncio.sleep(1.5)
 
 
