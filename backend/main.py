@@ -65,8 +65,8 @@ async def _wait_all(page: Page, selector: str, min_count: int = 1, timeout: int 
     return await page.query_selector_all(selector)
 
 async def _find_button(page: Page, label: str, exclude_class: str = ""):
-    """ボタンをテキストで探す。"""
-    for btn in await page.query_selector_all('.styles_cmButton__Jcmwz'):
+    """ボタンをテキストで探す（クラス問わず全buttonを対象）"""
+    for btn in await page.query_selector_all('button, [role="button"], .styles_cmButton__Jcmwz'):
         text = (await btn.text_content() or "").strip()
         cls  = await btn.get_attribute("class") or ""
         if label in text and (not exclude_class or exclude_class not in cls):
@@ -86,10 +86,10 @@ async def _js_click(page: Page, selector: str):
     """)
 
 async def _js_click_by_text(page: Page, text: str, exclude_class: str = ""):
-    """テキストでボタンを探してJSクリック"""
+    """テキストでボタンを探してJSクリック（全buttonを対象）"""
     await page.evaluate(f"""
         (function() {{
-            const btns = document.querySelectorAll('.styles_cmButton__Jcmwz');
+            const btns = document.querySelectorAll('button, [role="button"], .styles_cmButton__Jcmwz');
             for (const b of btns) {{
                 if (b.textContent.trim().includes('{text}') &&
                     (!'{exclude_class}' || !b.className.includes('{exclude_class}'))) {{
