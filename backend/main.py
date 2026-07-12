@@ -7,16 +7,33 @@ import re
 from datetime import date
 from typing import Literal
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from playwright.async_api import async_playwright, Page
+from playwright.async_api import async_playwright, Browser, Page
 from pydantic import BaseModel
 
-app = FastAPI(title="食堂まとめ予約 API")
+# グローバルブラウザ（サーバー起動時に一度だけ起動して使い回す）
+_playwright = None
+_browser: Browser = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global _playwright, _browser
+    _playwright = await async_playwright().start()
+    _browser = await _playwright.chromium.launch(
+        headless=True,
+        args=["--no-sandbox","--disable-setuid-sandbox","--disable-dev-shm-usage","--disable-gpu"],
+    )
+    yield
+    await _browser.close()
+    await _playwright.stop()
+
+app = FastAPI(title="食堂まとめ予約 API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # デプロイ後は GitHub Pages の URL に絞る
+    allow_origins=["*"],
     allow_methods=["POST", "GET"],
     allow_headers=["*"],
 )
@@ -305,26 +322,12 @@ async def health():
 
 @app.post("/reserve")
 async def reserve(req: ReserveRequest):
-    async with async_playwright() as pw:
-        browser = await pw.chromium.launch(
-            headless=True,
-            args=[
-                "--no-sandbox",
-                "--disable-setuid-sandbox",
-                "--disable-dev-shm-usage",
-                "--disable-gpu",
-            ],
-        )
+    async def run(item):
+        page = await _browser.new_page(viewport={"width": 390, "height": 844})
+        result = await reserve_one(page, req.login, item)
+        await page.close()
+        return result
 
-        # 全件を並列実行（1件につき独立したページを使う）
-        async def run(item):
-            page = await browser.new_page(viewport={"width": 390, "height": 844})
-            result = await reserve_one(page, req.login, item)
-            await page.close()
-            return result
-
-        results = await asyncio.gather(*[run(item) for item in req.items])
-        await browser.close()
-
+    results = await asyncio.gather(*[run(item) for item in req.items])
     ok = sum(1 for r in results if r["success"])
     return {"ok": ok, "total": len(results), "results": list(results)}
