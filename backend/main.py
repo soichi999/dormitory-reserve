@@ -258,7 +258,15 @@ async def health():
 async def reserve(req: ReserveRequest):
     results = []
     async with async_playwright() as pw:
-        browser = await pw.chromium.launch(headless=True)
+        browser = await pw.chromium.launch(
+            headless=True,
+            args=[
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+            ],
+        )
         page = await browser.new_page(viewport={"width": 390, "height": 844})
 
         for item in req.items:
