@@ -189,13 +189,26 @@ async def step5_select_meal_item(page: Page):
     if not item:
         raise Exception("食事アイテムが見つかりません")
     await _js_click(page, '.styles_menuItem__g9RDF')
-    await asyncio.sleep(1)
+    # content.js と同じ：カートに追加ボタンが出るまで最大10秒待つ
+    found = await _wait_add_to_cart_btn(page, timeout=10_000)
+    if not found:
+        raise Exception("メニュークリック後にカートボタンが出現しませんでした")
+
+async def _wait_add_to_cart_btn(page: Page, timeout: int = 10_000):
+    """「カートに追加」ボタン（フッター以外）が出るまでポーリング"""
+    deadline = asyncio.get_event_loop().time() + timeout / 1000
+    while asyncio.get_event_loop().time() < deadline:
+        btn = await _find_button(page, "カートに追加", exclude_class="styles_footerBtn")
+        if btn:
+            return btn
+        await asyncio.sleep(0.15)
+    return None
 
 async def step6_add_to_cart(page: Page):
-    btn = await _find_button(page, "カートに追加", exclude_class="footerBtn")
+    btn = await _wait_add_to_cart_btn(page, timeout=10_000)
     if not btn:
         raise Exception("「カートに追加」ボタンが見つかりません")
-    await _js_click_by_text(page, "カートに追加", exclude_class="footerBtn")
+    await _js_click_by_text(page, "カートに追加", exclude_class="styles_footerBtn")
     await _wait_selector(page, '.styles_footerBtn__E7fv0', timeout=10_000)
 
 async def step7_go_to_cart(page: Page):
