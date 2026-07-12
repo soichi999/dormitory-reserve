@@ -298,7 +298,7 @@ async def reserve_one(page: Page, login: LoginInfo, item: ReserveItem) -> dict:
 # エンドポイント
 # ================================================================
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 async def health():
     return {"status": "ok"}
 
