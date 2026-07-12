@@ -304,7 +304,6 @@ async def health():
 
 @app.post("/reserve")
 async def reserve(req: ReserveRequest):
-    results = []
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(
             headless=True,
@@ -315,13 +314,16 @@ async def reserve(req: ReserveRequest):
                 "--disable-gpu",
             ],
         )
-        page = await browser.new_page(viewport={"width": 390, "height": 844})
 
-        for item in req.items:
+        # 全件を並列実行（1件につき独立したページを使う）
+        async def run(item):
+            page = await browser.new_page(viewport={"width": 390, "height": 844})
             result = await reserve_one(page, req.login, item)
-            results.append(result)
+            await page.close()
+            return result
 
+        results = await asyncio.gather(*[run(item) for item in req.items])
         await browser.close()
 
-    ok  = sum(1 for r in results if r["success"])
-    return {"ok": ok, "total": len(results), "results": results}
+    ok = sum(1 for r in results if r["success"])
+    return {"ok": ok, "total": len(results), "results": list(results)}
