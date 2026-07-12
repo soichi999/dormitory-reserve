@@ -152,21 +152,27 @@ async def step4_click_proceed(page: Page):
     btn = await _find_button(page, "商品選択に進む")
     if not btn:
         raise Exception("「商品選択に進む」ボタンが見つかりません")
-    await btn.click()
+    await btn.scroll_into_view_if_needed()
+    await asyncio.sleep(0.3)
+    await btn.click(force=True)
     await _wait_selector(page, '.styles_menuItem__g9RDF', timeout=12_000)
 
 async def step5_select_meal_item(page: Page):
     item = await _wait_selector(page, '.styles_menuItem__g9RDF')
     if not item:
         raise Exception("食事アイテムが見つかりません")
-    await item.click()
+    await item.scroll_into_view_if_needed()
+    await asyncio.sleep(0.3)
+    await item.click(force=True)
     await asyncio.sleep(1)
 
 async def step6_add_to_cart(page: Page):
     btn = await _find_button(page, "カートに追加", exclude_class="footerBtn")
     if not btn:
         raise Exception("「カートに追加」ボタンが見つかりません")
-    await btn.click()
+    await btn.scroll_into_view_if_needed()
+    await asyncio.sleep(0.3)
+    await btn.click(force=True)
     await _wait_selector(page, '.styles_footerBtn__E7fv0', timeout=10_000)
 
 async def step7_go_to_cart(page: Page):
