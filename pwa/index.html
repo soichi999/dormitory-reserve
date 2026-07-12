@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>食堂まとめ予約</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="食堂予約">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:   #2563eb;
+      --blue-d: #1d4ed8;
+      --gray:   #6b7280;
+      --border: #e5e7eb;
+      --bg:     #f3f4f6;
+      --card:   #ffffff;
+      --red:    #dc2626;
+      --green:  #059669;
+    }
+
+    body {
+      font-family: -apple-system, "Hiragino Sans", "Yu Gothic UI", sans-serif;
+      background: var(--bg);
+      color: #111827;
+      min-height: 100dvh;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--blue);
+      color: #fff;
+      padding: 16px 20px;
+      padding-top: calc(16px + env(safe-area-inset-top));
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    header .logo { font-size: 24px; }
+    header h1 { font-size: 17px; font-weight: 700; }
+
+    /* ── Card ── */
+    .card {
+      background: var(--card);
+      border-radius: 14px;
+      margin: 12px 14px 0;
+      padding: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.07);
+    }
+    .card-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--gray);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 12px;
+    }
+
+    /* ── Form ── */
+    .field { margin-bottom: 10px; }
+    .field label {
+      display: block;
+      font-size: 12px;
+      color: var(--gray);
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+    .field input {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 15px;
+      outline: none;
+      background: #f9fafb;
+      -webkit-appearance: none;
+      transition: border-color .15s;
+    }
+    .field input:focus { border-color: var(--blue); background: #fff; }
+    .field input::placeholder { color: #9ca3af; }
+
+    .remember {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--gray);
+      margin-top: 4px;
+      cursor: pointer;
+    }
+    .remember input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--blue); }
+
+    /* ── Meal grid ── */
+    .grid-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th {
+      background: #f3f4f6;
+      padding: 8px 6px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 12px;
+      color: #374151;
+      border-bottom: 1px solid var(--border);
+    }
+    thead th:first-child { text-align: left; padding-left: 12px; }
+    .sub { font-size: 10px; font-weight: 400; color: var(--gray); }
+
+    tbody td {
+      padding: 9px 6px;
+      text-align: center;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    tbody td:first-child { text-align: left; padding-left: 12px; color: #1f2937; font-size: 13px; }
+    tbody tr:last-child td { border-bottom: none; }
+
+    input[type="checkbox"].meal-cb {
+      width: 20px; height: 20px;
+      accent-color: var(--blue);
+      cursor: pointer;
+    }
+    .closed { font-size: 10px; color: #d1d5db; }
+
+    /* ── Total ── */
+    .total-bar {
+      background: #eff6ff;
+      border-radius: 10px;
+      margin: 12px 14px 0;
+      padding: 10px 16px;
+      font-size: 14px;
+      color: #1d4ed8;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    /* ── Button ── */
+    #reserve-btn {
+      display: block;
+      width: calc(100% - 28px);
+      margin: 14px auto 0;
+      padding: 14px;
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .15s, transform .1s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #reserve-btn:active:not(:disabled) { transform: scale(0.97); }
+    #reserve-btn:disabled { background: #93c5fd; cursor: not-allowed; }
+
+    /* ── Progress ── */
+    #progress-card { display: none; }
+    .prog-wrap {
+      height: 5px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    #prog-bar {
+      height: 100%;
+      background: var(--blue);
+      border-radius: 3px;
+      transition: width .35s;
+      width: 0;
+    }
+    #result-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+    #result-list li { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; }
+    #result-list li.ok { color: var(--green); }
+    #result-list li.ng { color: var(--red); }
+    #result-list .err { font-size: 11px; color: var(--gray); margin-top: 2px; }
+
+    /* ── Server URL note ── */
+    #server-note {
+      font-size: 11px;
+      color: var(--gray);
+      text-align: center;
+      padding: 14px 14px 4px;
+    }
+    #server-note a { color: var(--blue); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="logo">🍱</span>
+  <h1>食堂まとめ予約</h1>
+</header>
+
+<!-- ログイン情報 -->
+<div class="card" id="login-card">
+  <div class="card-title">ログイン情報</div>
+
+  <div class="field">
+    <label>メールアドレス</label>
+    <input type="email" id="f-email" placeholder="例: user@yahoo.ne.jp" inputmode="email" autocomplete="email">
+  </div>
+  <div class="field">
+    <label>電話番号</label>
+    <input type="tel" id="f-phone" placeholder="例: 09012345678" inputmode="tel" autocomplete="tel">
+  </div>
+  <div class="field">
+    <label>号室番号＋氏名</label>
+    <input type="text" id="f-room" placeholder="例: 101田中太郎" autocomplete="off">
+  </div>
+
+  <label class="remember">
+    <input type="checkbox" id="f-remember"> ログイン情報を保存する
+  </label>
+</div>
+
+<!-- 予約グリッド -->
+<div class="card">
+  <div class="card-title">予約する食事を選択</div>
+  <div class="grid-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>日付</th>
+          <th>朝食<br><span class="sub">¥300</span></th>
+          <th>夕食<br><span class="sub">¥500</span></th>
+        </tr>
+      </thead>
+      <tbody id="grid-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 合計 -->
+<div class="total-bar" id="total-bar">食事を選択してください</div>
+
+<!-- 予約ボタン -->
+<button id="reserve-btn" disabled>予約する</button>
+
+<!-- 進捗・結果 -->
+<div class="card" id="progress-card">
+  <div class="prog-wrap"><div id="prog-bar"></div></div>
+  <ul id="result-list"></ul>
+</div>
+
+<!-- サーバーURLメモ -->
+<p id="server-note">
+  バックエンド: <a id="server-link" href="#" target="_blank" id="api-url-link">未設定</a>
+  &nbsp;|&nbsp;
+  <a href="#" id="change-server">変更</a>
+</p>
+
+<script>
+/* ================================================================
+   設定: デプロイ後に Render.com の URL を書き換えてください
+   ================================================================ */
+const DEFAULT_API = "https://your-app.onrender.com";  // ← ここを書き換える
+
+const WEEKDAY = ["日","月","火","水","木","金","土"];
+const B_PRICE = 300, D_PRICE = 500;
+
+// ── APIベースURL（localStorage で上書き可能） ──
+function getApiBase() {
+  return localStorage.getItem("apiBase") || DEFAULT_API;
+}
+
+// ── 締切判定 ──
+function canB(d) {
+  const dl = new Date(d); dl.setDate(dl.getDate() - 1); dl.setHours(9,0,0,0);  // 前日9:00 (実際は21:00だが安全側)
+  return Date.now() < dl.getTime();
+}
+function canD(d) {
+  const dl = new Date(d); dl.setHours(9,0,0,0);
+  return Date.now() < dl.getTime();
+}
+
+// ── 予約可能日 ──
+function getReservableDays() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const dow = today.getDay();
+  let endDate = new Date(today);
+  if (dow >= 1 && dow <= 3) {
+    endDate.setDate(today.getDate() + (5 - dow));         // 今週金
+  } else {
+    const toMon = dow === 0 ? 1 : dow === 6 ? 2 : 8 - dow;
+    endDate.setDate(today.getDate() + toMon + 4);         // 来週金
+  }
+  const days = [], d = new Date(today);
+  d.setDate(d.getDate() + 1);
+  while (d <= endDate) {
+    if (d.getDay() >= 1 && d.getDay() <= 5) days.push(new Date(d));
+    d.setDate(d.getDate() + 1);
+  }
+  return days;
+}
+
+// ── グリッド生成 ──
+function buildGrid() {
+  const tbody = document.getElementById("grid-body");
+  getReservableDays().forEach(d => {
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    const label = `${d.getMonth()+1}/${d.getDate()}（${WEEKDAY[d.getDay()]}）`;
+    const cB = canB(d), cD = canD(d);
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${label}</td>
+      <td>${cB ? `<input type="checkbox" class="meal-cb" data-date="${key}" data-meal="breakfast">` : '<span class="closed">締切</span>'}</td>
+      <td>${cD ? `<input type="checkbox" class="meal-cb" data-date="${key}" data-meal="dinner">` : '<span class="closed">締切</span>'}</td>`;
+    tbody.appendChild(tr);
+  });
+  tbody.addEventListener("change", updateTotal);
+}
+
+// ── 合計更新 ──
+function updateTotal() {
+  const checks = [...document.querySelectorAll(".meal-cb:checked")];
+  const nb = checks.filter(c => c.dataset.meal === "breakfast").length;
+  const nd = checks.filter(c => c.dataset.meal === "dinner").length;
+  const total = nb + nd;
+  document.getElementById("total-bar").textContent =
+    total === 0
+      ? "食事を選択してください"
+      : `朝食 ${nb}回 ＋ 夕食 ${nd}回 ＝ ${total}件（合計 ¥${(nb*B_PRICE + nd*D_PRICE).toLocaleString()}）`;
+  document.getElementById("reserve-btn").disabled = total === 0;
+}
+
+// ── 認証情報 保存/読み込み ──
+function saveCreds() {
+  const data = { email: f("f-email"), phone: f("f-phone"), room: f("f-room") };
+  localStorage.setItem("creds", JSON.stringify(data));
+}
+function loadCreds() {
+  const data = JSON.parse(localStorage.getItem("creds") || "{}");
+  if (data.email) { id("f-email").value = data.email; id("f-phone").value = data.phone; id("f-room").value = data.room; id("f-remember").checked = true; }
+}
+const id  = x => document.getElementById(x);
+const f   = x => id(x)?.value?.trim() || "";
+
+// ── 予約実行 ──
+async function runReservations() {
+  const email = f("f-email"), phone = f("f-phone"), room = f("f-room");
+  if (!email || !phone || !room) { alert("ログイン情報をすべて入力してください"); return; }
+  if (id("f-remember").checked) saveCreds();
+
+  const items = [...document.querySelectorAll(".meal-cb:checked")]
+    .map(c => ({ date: c.dataset.date, meal: c.dataset.meal }))
+    .sort((a, b) => a.date !== b.date ? (a.date < b.date ? -1 : 1) : (a.meal === "breakfast" ? -1 : 1));
+
+  if (!items.length) return;
+
+  id("reserve-btn").disabled = true;
+  id("reserve-btn").textContent = "予約中...";
+  const pc = id("progress-card"); pc.style.display = "block";
+  const rl = id("result-list"); rl.innerHTML = "";
+  id("prog-bar").style.width = "0";
+
+  const apiBase = getApiBase();
+  try {
+    const resp = await fetch(`${apiBase}/reserve`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ login: { email, phone, room }, items })
+    });
+    if (!resp.ok) throw new Error(`サーバーエラー (${resp.status})`);
+    const data = await resp.json();
+    data.results.forEach((r, i) => {
+      const d = new Date(r.date + "T00:00:00");
+      const label = `${d.getMonth()+1}/${d.getDate()}（${WEEKDAY[d.getDay()]}）${r.meal === "breakfast" ? "朝食" : "夕食"}`;
+      const li = document.createElement("li");
+      li.className = r.success ? "ok" : "ng";
+      li.innerHTML = r.success
+        ? `<span>✅</span><span>${label}　予約完了</span>`
+        : `<span>❌</span><div><div>${label}　失敗</div><div class="err">${r.message}</div></div>`;
+      rl.appendChild(li);
+      id("prog-bar").style.width = `${(i+1)/data.results.length*100}%`;
+    });
+    const sum = document.createElement("li");
+    sum.style.cssText = "margin-top:8px;font-weight:700;color:#111827";
+    sum.textContent = `完了: ${data.ok}/${data.total} 件成功`;
+    rl.appendChild(sum);
+  } catch(e) {
+    const li = document.createElement("li");
+    li.className = "ng";
+    li.textContent = "⚠️ " + e.message;
+    rl.appendChild(li);
+  }
+
+  id("prog-bar").style.width = "100%";
+  id("reserve-btn").disabled = false;
+  id("reserve-btn").textContent = "予約する";
+}
+
+// ── サーバーURL表示 ──
+function updateServerLink() {
+  const url = getApiBase();
+  const link = id("server-link");
+  link.textContent = url.replace("https://","");
+  link.href = url + "/health";
+}
+
+// ── 初期化 ──
+document.addEventListener("DOMContentLoaded", () => {
+  buildGrid(); loadCreds(); updateTotal(); updateServerLink();
+  id("reserve-btn").addEventListener("click", runReservations);
+  id("change-server").addEventListener("click", e => {
+    e.preventDefault();
+    const url = prompt("バックエンドのURLを入力 (例: https://xxx.onrender.com)", getApiBase());
+    if (url) { localStorage.setItem("apiBase", url.replace(/\/$/, "")); updateServerLink(); }
+  });
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./sw.js");
+  }
+});
+</script>
+</body>
+</html>
