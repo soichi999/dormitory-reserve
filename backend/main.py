@@ -61,7 +61,7 @@ async def _wait_all(page: Page, selector: str, min_count: int = 1, timeout: int 
         els = await page.query_selector_all(selector)
         if len(els) >= min_count:
             return els
-        await asyncio.sleep(0.15)
+        await asyncio.sleep(0.05)  # 150ms→50ms
     return await page.query_selector_all(selector)
 
 async def _find_button(page: Page, label: str, exclude_class: str = ""):
@@ -109,7 +109,8 @@ async def _js_click_by_text(page: Page, text: str, exclude_class: str = ""):
 
 async def step1_go_to_stores(page: Page):
     await page.goto(SITE_URL)
-    await page.wait_for_load_state("networkidle", timeout=20_000)
+    await page.wait_for_load_state("domcontentloaded", timeout=15_000)
+    await _wait_selector(page, '.styles_masterStoreBox__TrvbV', timeout=10_000)
 
 async def step2_select_store(page: Page):
     box = await _wait_selector(page, '.styles_masterStoreBox__TrvbV')
@@ -148,7 +149,7 @@ async def step3_select_date_time(page: Page, date_str: str, meal: str):
         labels = [await o.text_content() for o in opts]
         raise Exception(f"日付 {month}/{day} がセレクトに見つかりません。選択肢: {labels}")
     await date_sel.select_option(value=chosen)
-    await asyncio.sleep(0.5)
+    await asyncio.sleep(0.2)
 
     # ── 時間セレクト ──
     selects2 = await _wait_all(page, '.styles_cmSelect__9Ud3U', min_count=2)
@@ -201,7 +202,7 @@ async def _wait_add_to_cart_btn(page: Page, timeout: int = 10_000):
         btn = await _find_button(page, "カートに追加", exclude_class="styles_footerBtn")
         if btn:
             return btn
-        await asyncio.sleep(0.15)
+        await asyncio.sleep(0.05)  # 150ms→50ms
     return None
 
 async def step6_add_to_cart(page: Page):
@@ -252,14 +253,14 @@ async def step9_select_payment(page: Page):
                 );
             })()
         """)
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.2)
 
 async def step10_confirm_order(page: Page):
     btn = await _find_button(page, "注文を確定")
     if not btn:
         raise Exception("「注文を確定」ボタンが見つかりません")
     await _js_click_by_text(page, "注文を確定")
-    await asyncio.sleep(1.5)
+    await asyncio.sleep(0.5)
 
 
 # ================================================================
