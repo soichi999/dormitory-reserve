@@ -20,7 +20,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-GRAPHQL         = "https://shonanfujisawa-international-dormitory.mo-order.com/graphql"
+GRAPHQL         = "https://shonanfujisawa-international-dormitory.mo-order.com/api/graphql"
 DELIVERY_STORE  = "2db98ea3-f9fb-4b3b-86cc-e18677b01491"
 SITE_ID         = "d1161f9d-ab82-41ea-ad43-bf047d86b731"
 
