@@ -342,7 +342,8 @@ function updateTotal() {
     total === 0
       ? "食事を選択してください"
       : `朝食 ${nb}回 ＋ 夕食 ${nd}回 ＝ ${total}件（合計 ¥${(nb*B_PRICE + nd*D_PRICE).toLocaleString()}）`;
-  document.getElementById("reserve-btn").disabled = total === 0;
+  const loginOk = f("f-email") && f("f-phone") && f("f-room");
+  document.getElementById("reserve-btn").disabled = total === 0 || !loginOk;
 }
 
 // ── 認証情報 保存/読み込み ──
@@ -426,6 +427,7 @@ let devMode = false;
 
 document.addEventListener("DOMContentLoaded", () => {
   buildGrid(); loadCreds(); updateTotal();
+  ["f-email","f-phone","f-room"].forEach(x => id(x).addEventListener("input", updateTotal));
   id("reserve-btn").addEventListener("click", runReservations);
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("./sw.js");
