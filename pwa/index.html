@@ -414,6 +414,8 @@ async function runReservations() {
 
 
 // ── 初期化 ──
+let devMode = false;
+
 document.addEventListener("DOMContentLoaded", () => {
   buildGrid(); loadCreds(); updateTotal();
   id("reserve-btn").addEventListener("click", runReservations);
@@ -422,7 +424,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // 開発者モード
-  let devMode = false;
   id("dev-toggle").addEventListener("click", e => {
     e.preventDefault();
     if (devMode) {
