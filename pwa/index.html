@@ -308,18 +308,31 @@ function getReservableDays() {
   return days;
 }
 
+// ── 注文履歴 ──
+function getHistory() {
+  return JSON.parse(localStorage.getItem("orderHistory") || "{}");
+}
+function saveHistory(date, meal) {
+  const h = getHistory();
+  h[`${date}_${meal}`] = true;
+  localStorage.setItem("orderHistory", JSON.stringify(h));
+}
+
 // ── グリッド生成 ──
 function buildGrid() {
   const tbody = document.getElementById("grid-body");
+  const history = getHistory();
   getReservableDays().forEach(d => {
     const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
     const label = `${d.getMonth()+1}/${d.getDate()}（${WEEKDAY[d.getDay()]}）`;
     const cB = canB(d), cD = canD(d);
+    const doneB = !devMode && history[`${key}_breakfast`];
+    const doneD = !devMode && history[`${key}_dinner`];
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${label}</td>
-      <td>${cB ? `<input type="checkbox" class="meal-cb" data-date="${key}" data-meal="breakfast">` : '<span class="closed">締切</span>'}</td>
-      <td>${cD ? `<input type="checkbox" class="meal-cb" data-date="${key}" data-meal="dinner">` : '<span class="closed">締切</span>'}</td>`;
+      <td>${cB ? `<input type="checkbox" class="meal-cb" data-date="${key}" data-meal="breakfast"${doneB ? ' disabled style="opacity:0.25"' : ''}>` + (doneB ? '<span class="closed">予約済</span>' : '') : '<span class="closed">締切</span>'}</td>
+      <td>${cD ? `<input type="checkbox" class="meal-cb" data-date="${key}" data-meal="dinner"${doneD ? ' disabled style="opacity:0.25"' : ''}>` + (doneD ? '<span class="closed">予約済</span>' : '') : '<span class="closed">締切</span>'}</td>`;
     tbody.appendChild(tr);
   });
   tbody.addEventListener("change", updateTotal);
@@ -382,6 +395,7 @@ async function runReservations() {
       const label = `${d.getMonth()+1}/${d.getDate()}（${WEEKDAY[d.getDay()]}）${r.meal === "breakfast" ? "朝食" : "夕食"}`;
       const li = document.createElement("li");
       li.className = r.success ? "ok" : "ng";
+      if (r.success && !devMode) saveHistory(r.date, r.meal);
       li.innerHTML = r.success
         ? `<span>✅</span><span>${label}　予約完了</span>`
         : `<span>❌</span><div><div>${label}　失敗</div><div class="err">${r.message}</div></div>`;
@@ -446,6 +460,10 @@ document.addEventListener("DOMContentLoaded", () => {
       id("dev-toggle").style.borderColor = "#f59e0b";
       id("dev-toggle").textContent = "🛠 開発者モード ON";
     }
+    // グリッドを再描画（予約済み表示の切り替え）
+    id("grid-body").innerHTML = "";
+    buildGrid();
+    updateTotal();
   });
 });
 </script>
