@@ -389,7 +389,15 @@ async function runReservations() {
       const label = `${d.getMonth()+1}/${d.getDate()}（${WEEKDAY[d.getDay()]}）${r.meal === "breakfast" ? "朝食" : "夕食"}`;
       const li = document.createElement("li");
       li.className = r.success ? "ok" : "ng";
-      if (r.success && !devMode) saveHistory(r.date, r.meal);
+      if (r.success && !devMode) {
+        saveHistory(r.date, r.meal);
+        // グリッドのチェックボックスを即座に予約済みに切り替え
+        const cb = document.querySelector(`.meal-cb[data-date="${r.date}"][data-meal="${r.meal}"]`);
+        if (cb) {
+          const td = cb.parentElement;
+          td.innerHTML = '<span class="closed">予約済</span>';
+        }
+      }
       li.innerHTML = r.success
         ? `<span>✅</span><span>${label}　予約完了</span>`
         : `<span>❌</span><div><div>${label}　失敗</div><div class="err">${r.message}</div></div>`;
