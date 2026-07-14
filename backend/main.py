@@ -55,6 +55,7 @@ class ReserveItem(BaseModel):
 class ReserveRequest(BaseModel):
     login: LoginInfo
     items: list[ReserveItem]
+    dry_run: bool = False
 
 
 # ================================================================
@@ -159,7 +160,7 @@ async def get_menu_item(client: httpx.AsyncClient, pickup_time: str, is_breakfas
 # 1件予約
 # ================================================================
 
-async def reserve_one(client: httpx.AsyncClient, login: LoginInfo, item: ReserveItem) -> dict:
+async def reserve_one(client: httpx.AsyncClient, login: LoginInfo, item: ReserveItem, dry_run: bool = False) -> dict:
     is_breakfast = item.meal == "breakfast"
     try:
         # 1. pickupTime を取得
@@ -185,7 +186,10 @@ async def reserve_one(client: httpx.AsyncClient, login: LoginInfo, item: Reserve
         })
         cart_id = cart_data["upsertCart"]["id"]
 
-        # 4. 注文確定
+        # 4. 注文確定（dry_runの場合はスキップ）
+        if dry_run:
+            return {"date": item.date, "meal": item.meal, "success": True, "message": "[DRY RUN] 予約完了（実際の予約はされていません）"}
+
         phone = re.sub(r"[^0-9]", "", login.phone)
         await gql(client, "CreateTakeoutOrder", M_CREATE_ORDER, {
             "input": {
@@ -227,7 +231,7 @@ async def reserve(req: ReserveRequest, request: Request):
     _rate[ip].extend([now] * len(req.items))
     async with httpx.AsyncClient() as client:
         results = await asyncio.gather(*[
-            reserve_one(client, req.login, item) for item in req.items
+            reserve_one(client, req.login, item, req.dry_run) for item in req.items
         ])
     ok = sum(1 for r in results if r["success"])
     return {"ok": ok, "total": len(results), "results": list(results)}

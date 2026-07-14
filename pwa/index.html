@@ -256,6 +256,14 @@
   <a href="#" id="change-server">変更</a>
 </p>
 
+<!-- 開発者モード -->
+<div id="dev-bar" style="display:none;background:#fef3c7;border:1.5px solid #f59e0b;border-radius:10px;margin:8px 14px;padding:8px 14px;font-size:12px;font-weight:700;color:#92400e;text-align:center">
+  🛠 開発者モード ON（実際の予約はされません）
+</div>
+<p style="text-align:center;padding:8px 0 16px">
+  <a href="#" id="dev-toggle" style="font-size:11px;color:#d1d5db;text-decoration:none">開発者</a>
+</p>
+
 <script>
 /* ================================================================
    設定: デプロイ後に Render.com の URL を書き換えてください
@@ -365,7 +373,7 @@ async function runReservations() {
     const resp = await fetch(`${apiBase}/reserve`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ login: { email, phone, room }, items })
+      body: JSON.stringify({ login: { email, phone, room }, items, dry_run: devMode })
     });
     if (!resp.ok) throw new Error(`サーバーエラー (${resp.status})`);
     const data = await resp.json();
@@ -416,6 +424,23 @@ document.addEventListener("DOMContentLoaded", () => {
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("./sw.js");
   }
+
+  // 開発者モード
+  let devMode = false;
+  id("dev-toggle").addEventListener("click", e => {
+    e.preventDefault();
+    if (devMode) {
+      devMode = false;
+      id("dev-bar").style.display = "none";
+      id("dev-toggle").textContent = "開発者";
+    } else {
+      const pw = prompt("パスワードを入力してください");
+      if (pw !== "sko1128@") { alert("パスワードが違います"); return; }
+      devMode = true;
+      id("dev-bar").style.display = "block";
+      id("dev-toggle").textContent = "開発者モード OFF";
+    }
+  });
 });
 </script>
 </body>
