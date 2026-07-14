@@ -249,12 +249,6 @@
   <ul id="result-list"></ul>
 </div>
 
-<!-- サーバーURLメモ -->
-<p id="server-note">
-  バックエンド: <a id="server-link" href="#" target="_blank" id="api-url-link">未設定</a>
-  &nbsp;|&nbsp;
-  <a href="#" id="change-server">変更</a>
-</p>
 
 <!-- 開発者モード -->
 <div id="dev-bar" style="display:none;background:#fef3c7;border:1.5px solid #f59e0b;border-radius:10px;margin:8px 14px;padding:8px 14px;font-size:12px;font-weight:700;color:#92400e;text-align:center">
@@ -418,23 +412,11 @@ async function runReservations() {
   id("reserve-btn").textContent = "予約する";
 }
 
-// ── サーバーURL表示 ──
-function updateServerLink() {
-  const url = getApiBase();
-  const link = id("server-link");
-  link.textContent = url.replace("https://","");
-  link.href = url + "/health";
-}
 
 // ── 初期化 ──
 document.addEventListener("DOMContentLoaded", () => {
-  buildGrid(); loadCreds(); updateTotal(); updateServerLink();
+  buildGrid(); loadCreds(); updateTotal();
   id("reserve-btn").addEventListener("click", runReservations);
-  id("change-server").addEventListener("click", e => {
-    e.preventDefault();
-    const url = prompt("バックエンドのURLを入力 (例: https://xxx.onrender.com)", getApiBase());
-    if (url) { localStorage.setItem("apiBase", url.replace(/\/$/, "")); updateServerLink(); }
-  });
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("./sw.js");
   }
