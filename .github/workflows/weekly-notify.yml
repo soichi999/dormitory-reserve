@@ -1,0 +1,14 @@
+name: Weekly Meal Reminder
+
+on:
+  schedule:
+    - cron: "0 8 * * 4"  # 毎週木曜 17:00 JST (UTC+9 = 08:00 UTC)
+  workflow_dispatch:       # 手動実行も可能
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send push notification
+        run: |
+          curl -X POST https://dormitory-reserve.onrender.com/notify

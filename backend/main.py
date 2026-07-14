@@ -3,6 +3,8 @@
 GraphQL API を直接呼び出して食事を予約します（Playwright不使用）。
 """
 import asyncio
+import json
+import os
 import re
 from typing import Literal
 
@@ -10,6 +12,19 @@ import httpx
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from pywebpush import webpush, WebPushException
+
+VAPID_PUBLIC  = os.environ.get("VAPID_PUBLIC",  "BNIQZi-qGGW-oMqMJ0v6p7vrthPlPIfWPQVcnip72adhsqaDme7mymxb7CINbse5aiON5c1_swTyUJT4C0H6M8U")
+VAPID_PRIVATE = os.environ["VAPID_PRIVATE"]
+VAPID_EMAIL   = os.environ.get("VAPID_EMAIL",   "mailto:m-sko-28111@yahoo.ne.jp")
+
+SUPABASE_URL  = os.environ.get("SUPABASE_URL",  "https://yjcbvfbehuggtuigebvw.supabase.co")
+SUPABASE_KEY  = os.environ["SUPABASE_KEY"]
+SUPABASE_HEADERS = {
+    "apikey": SUPABASE_KEY,
+    "Authorization": f"Bearer {SUPABASE_KEY}",
+    "Content-Type": "application/json",
+}
 
 app = FastAPI(title="食堂まとめ予約 API")
 
@@ -208,6 +223,56 @@ async def reserve_one(client: httpx.AsyncClient, login: LoginInfo, item: Reserve
 @app.api_route("/health", methods=["GET", "HEAD"])
 async def health():
     return {"status": "ok"}
+
+
+class PushSubscription(BaseModel):
+    endpoint: str
+    keys: dict  # {"p256dh": "...", "auth": "..."}
+
+@app.post("/subscribe")
+async def subscribe(sub: PushSubscription):
+    async with httpx.AsyncClient() as client:
+        await client.post(
+            f"{SUPABASE_URL}/rest/v1/push_subscriptions",
+            headers={**SUPABASE_HEADERS, "Prefer": "resolution=ignore-duplicates"},
+            json={
+                "endpoint": sub.endpoint,
+                "p256dh": sub.keys["p256dh"],
+                "auth": sub.keys["auth"],
+            },
+        )
+    return {"ok": True}
+
+
+@app.post("/notify")
+async def notify():
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(
+            f"{SUPABASE_URL}/rest/v1/push_subscriptions?select=endpoint,p256dh,auth",
+            headers=SUPABASE_HEADERS,
+        )
+        subs = resp.json()
+
+    sent, failed = 0, 0
+    for s in subs:
+        try:
+            webpush(
+                subscription_info={
+                    "endpoint": s["endpoint"],
+                    "keys": {"p256dh": s["p256dh"], "auth": s["auth"]},
+                },
+                data=json.dumps({
+                    "title": "🍱 食堂予約リマインダー",
+                    "body": "来週の食事はもう予約しましたか？",
+                }),
+                vapid_private_key=VAPID_PRIVATE,
+                vapid_claims={"sub": VAPID_EMAIL},
+            )
+            sent += 1
+        except WebPushException:
+            failed += 1
+
+    return {"sent": sent, "failed": failed}
 
 
 @app.post("/reserve")
