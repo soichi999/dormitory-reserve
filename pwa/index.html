@@ -261,7 +261,7 @@
   🛠 開発者モード ON（実際の予約はされません）
 </div>
 <p style="text-align:center;padding:8px 0 16px">
-  <button id="dev-toggle" style="background:#f3f4f6;color:#9ca3af;border:1.5px solid #e5e7eb;border-radius:20px;padding:6px 16px;font-size:12px;font-weight:700;cursor:pointer">🛠 開発者モード OFF</button>
+  <button id="dev-toggle" style="background:#6b7280;color:#fff;border:1.5px solid #6b7280;border-radius:20px;padding:6px 16px;font-size:12px;font-weight:700;cursor:pointer">🛠 開発者モード OFF</button>
 </p>
 
 <script>
@@ -432,9 +432,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (devMode) {
       devMode = false;
       id("dev-bar").style.display = "none";
-      id("dev-toggle").style.background = "#f3f4f6";
-      id("dev-toggle").style.color = "#9ca3af";
-      id("dev-toggle").style.borderColor = "#e5e7eb";
+      id("dev-toggle").style.background = "#6b7280";
+      id("dev-toggle").style.color = "#fff";
+      id("dev-toggle").style.borderColor = "#6b7280";
       id("dev-toggle").textContent = "🛠 開発者モード OFF";
     } else {
       const pw = prompt("パスワードを入力してください");
