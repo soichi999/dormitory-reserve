@@ -249,11 +249,6 @@
   <ul id="result-list"></ul>
 </div>
 
-<!-- 通知 -->
-<div style="text-align:center;padding:10px 14px 4px">
-  <button id="notify-btn" style="background:#059669;color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:14px;font-weight:700;cursor:pointer">🔔 週次リマインダーを受け取る</button>
-</div>
-
 <!-- サーバーURLメモ -->
 <p id="server-note">
   バックエンド: <a id="server-link" href="#" target="_blank" id="api-url-link">未設定</a>
@@ -347,11 +342,32 @@ function loadCreds() {
 const id  = x => document.getElementById(x);
 const f   = x => id(x)?.value?.trim() || "";
 
+// ── 通知登録 ──
+async function registerPush() {
+  try {
+    if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
+    if (Notification.permission === "denied") return;
+    const perm = await Notification.requestPermission();
+    if (perm !== "granted") return;
+    const reg = await navigator.serviceWorker.ready;
+    const VAPID_PUBLIC = "BNIQZi-qGGW-oMqMJ0v6p7vrthPlPIfWPQVcnip72adhsqaDme7mymxb7CINbse5aiON5c1_swTyUJT4C0H6M8U";
+    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: VAPID_PUBLIC });
+    const p256dh = btoa(String.fromCharCode(...new Uint8Array(sub.getKey("p256dh"))));
+    const auth   = btoa(String.fromCharCode(...new Uint8Array(sub.getKey("auth"))));
+    await fetch(`${getApiBase()}/subscribe`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ endpoint: sub.endpoint, keys: { p256dh, auth } }),
+    });
+  } catch(e) { /* 通知は任意なので失敗しても無視 */ }
+}
+
 // ── 予約実行 ──
 async function runReservations() {
   const email = f("f-email"), phone = f("f-phone"), room = f("f-room");
   if (!email || !phone || !room) { alert("ログイン情報をすべて入力してください"); return; }
   if (id("f-remember").checked) saveCreds();
+  registerPush(); // 通知登録（バックグラウンドで実行）
 
   const items = [...document.querySelectorAll(".meal-cb:checked")]
     .map(c => ({ date: c.dataset.date, meal: c.dataset.meal }))
@@ -422,30 +438,6 @@ document.addEventListener("DOMContentLoaded", () => {
     navigator.serviceWorker.register("./sw.js");
   }
 
-  // 通知登録
-  id("notify-btn").addEventListener("click", async () => {
-    if (!("Notification" in window) || !("serviceWorker" in navigator)) {
-      alert("このブラウザは通知に対応していません"); return;
-    }
-    const perm = await Notification.requestPermission();
-    if (perm !== "granted") { alert("通知が許可されませんでした"); return; }
-
-    const reg = await navigator.serviceWorker.ready;
-    const VAPID_PUBLIC = "BNIQZi-qGGW-oMqMJ0v6p7vrthPlPIfWPQVcnip72adhsqaDme7mymxb7CINbse5aiON5c1_swTyUJT4C0H6M8U";
-    const sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: VAPID_PUBLIC,
-    });
-
-    await fetch(`${getApiBase()}/subscribe`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ endpoint: sub.endpoint, keys: { p256dh: btoa(String.fromCharCode(...new Uint8Array(sub.getKey("p256dh")))), auth: btoa(String.fromCharCode(...new Uint8Array(sub.getKey("auth")))) } }),
-    });
-
-    id("notify-btn").textContent = "✅ 通知登録済み";
-    id("notify-btn").disabled = true;
-  });
 });
 </script>
 </body>
