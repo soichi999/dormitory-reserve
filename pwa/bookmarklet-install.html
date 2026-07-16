@@ -48,10 +48,20 @@
     <div class="num">2</div>
     <div class="step-text">
       <strong>スマホの場合：</strong><br>
-      ① まずこのページをブックマークに追加する<br>
-      ② ブックマークの編集画面を開く<br>
-      ③ URLを以下に書き換える：<br>
-      <code style="font-size:11px;word-break:break-all;background:#f3f4f6;padding:4px 6px;border-radius:4px;display:block;margin-top:6px">javascript:(function(){var s=document.createElement('script');s.src='https://soichi999.github.io/dormitory-reserve/pwa/bookmarklet.js?t='+Date.now();document.body.appendChild(s);})();</code>
+      ① 下の「URLをコピー」を押す<br>
+      ② このページをブックマークに追加する<br>
+      ③ ブックマーク一覧を開き、追加したブックマークを長押し→「編集」<br>
+      ④ URLの欄を全選択して、コピーしたものを貼り付けて保存<br><br>
+      <button id="copy-btn" style="background:#2563eb;color:#fff;border:none;border-radius:10px;padding:10px 18px;font-size:14px;font-weight:700;cursor:pointer">URLをコピー</button>
+      <script>
+        document.getElementById('copy-btn').onclick = function() {
+          var url = "javascript:(function(){var s=document.createElement('script');s.src='https://soichi999.github.io/dormitory-reserve/pwa/bookmarklet.js?t='+Date.now();document.body.appendChild(s);})();";
+          navigator.clipboard.writeText(url).then(function() {
+            document.getElementById('copy-btn').textContent = '✅ コピーしました';
+            setTimeout(function(){ document.getElementById('copy-btn').textContent = 'URLをコピー'; }, 2000);
+          });
+        };
+      </script>
     </div>
   </div>
 
