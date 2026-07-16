@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>食堂まとめ予約 - インストール</title>
+  <style>
+    body { font-family: -apple-system, "Hiragino Sans", sans-serif; background: #f3f4f6; color: #111827; margin: 0; padding: 20px; }
+    .card { background: #fff; border-radius: 14px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.07); }
+    h1 { font-size: 20px; margin: 0 0 4px; }
+    p { font-size: 14px; color: #6b7280; margin: 0 0 16px; }
+    .step { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 16px; }
+    .num { background: #2563eb; color: #fff; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; }
+    .step-text { font-size: 14px; color: #374151; line-height: 1.6; }
+    .bm-link {
+      display: inline-block;
+      background: #2563eb;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      text-decoration: none;
+      margin: 8px 0;
+    }
+    .note { font-size: 12px; color: #9ca3af; margin-top: 8px; }
+    .site-link { color: #2563eb; font-weight: 700; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h1>🍱 食堂まとめ予約</h1>
+  <p>ブックマークレット版 — サーバー不要・あなたのブラウザで直接予約</p>
+
+  <div class="step">
+    <div class="num">1</div>
+    <div class="step-text">
+      下のボタンを<strong>ブックマークバーにドラッグ</strong>して追加する<br>
+      （スマホの場合は次の手順へ）
+      <br><br>
+      <a class="bm-link" href="javascript:(function(){var s=document.createElement('script');s.src='https://soichi999.github.io/dormitory-reserve/pwa/bookmarklet.js?t='+Date.now();document.body.appendChild(s);})();">🍱 食堂まとめ予約</a>
+      <div class="note">↑ このボタンをブックマークバーへドラッグ</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">2</div>
+    <div class="step-text">
+      <strong>スマホの場合：</strong><br>
+      ① まずこのページをブックマークに追加する<br>
+      ② ブックマークの編集画面を開く<br>
+      ③ URLを以下に書き換える：<br>
+      <code style="font-size:11px;word-break:break-all;background:#f3f4f6;padding:4px 6px;border-radius:4px;display:block;margin-top:6px">javascript:(function(){var s=document.createElement('script');s.src='https://soichi999.github.io/dormitory-reserve/pwa/bookmarklet.js?t='+Date.now();document.body.appendChild(s);})();</code>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">3</div>
+    <div class="step-text">
+      <a class="site-link" href="https://shonanfujisawa-international-dormitory.mo-order.com/stores" target="_blank">食堂サイト</a>を開いた状態で、追加したブックマークをタップ
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">4</div>
+    <div class="step-text">画面上にUIが出るので、食事を選んで予約する</div>
+  </div>
+</div>
+
+</body>
+</html>
