@@ -343,7 +343,7 @@ function updateTotal() {
       ? "食事を選択してください"
       : `朝食 ${nb}回 ＋ 夕食 ${nd}回 ＝ ${total}件（合計 ¥${(nb*B_PRICE + nd*D_PRICE).toLocaleString()}）`;
   const loginOk = f("f-email") && f("f-phone") && f("f-room");
-  document.getElementById("reserve-btn").disabled = total === 0 || !loginOk;
+  document.getElementById("reserve-btn").disabled = true || total === 0 || !loginOk;
 }
 
 // ── 認証情報 保存/読み込み ──
