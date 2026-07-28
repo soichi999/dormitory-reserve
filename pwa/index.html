@@ -45,7 +45,17 @@
       z-index: 10;
     }
     header .logo { font-size: 24px; }
-    header h1 { font-size: 17px; font-weight: 700; }
+    header h1 { font-size: 17px; font-weight: 700; flex: 1; }
+    header .user-badge {
+      font-size: 11px;
+      background: rgba(255,255,255,.2);
+      border-radius: 20px;
+      padding: 3px 10px;
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
 
     /* ── Card ── */
     .card {
@@ -140,7 +150,24 @@
       text-align: center;
     }
 
-    /* ── Button ── */
+    /* ── Buttons ── */
+    .btn-primary {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .15s, transform .1s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-primary:active:not(:disabled) { transform: scale(0.97); }
+    .btn-primary:disabled { background: #93c5fd; cursor: not-allowed; }
+
     #reserve-btn {
       display: block;
       width: calc(100% - 28px);
@@ -181,21 +208,81 @@
     #result-list li.ng { color: var(--red); }
     #result-list .err { font-size: 11px; color: var(--gray); margin-top: 2px; }
 
-    /* ── Server URL note ── */
-    #server-note {
-      font-size: 11px;
-      color: var(--gray);
-      text-align: center;
-      padding: 14px 14px 4px;
+    /* ── Passkey screen ── */
+    #passkey-screen {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 20px 0 40px;
     }
-    #server-note a { color: var(--blue); text-decoration: none; }
+    .pk-hero {
+      text-align: center;
+      padding: 0 20px 24px;
+    }
+    .pk-hero .pk-icon { font-size: 56px; margin-bottom: 16px; }
+    .pk-hero h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+    .pk-hero p { font-size: 13px; color: var(--gray); }
+
+    .pk-error {
+      color: var(--red);
+      font-size: 12px;
+      text-align: center;
+      margin-top: 10px;
+      min-height: 18px;
+    }
+    .pk-link {
+      display: block;
+      text-align: center;
+      margin-top: 14px;
+      font-size: 12px;
+      color: var(--gray);
+    }
+    .pk-link a { color: var(--blue); text-decoration: none; }
   </style>
 </head>
 <body>
 
+<!-- ================================================================
+     パスキー認証画面
+     ================================================================ -->
+<div id="passkey-screen">
+  <div class="pk-hero">
+    <div class="pk-icon">🍱</div>
+    <h1>食堂まとめ予約</h1>
+    <p>湘南藤沢国際寮</p>
+  </div>
+
+  <!-- ログイン -->
+  <div class="card" id="pk-login-card">
+    <button class="btn-primary" id="pk-login-btn">Face IDでログイン</button>
+    <p class="pk-link">初めての方 → <a href="#" id="pk-show-register">パスキーを登録</a></p>
+    <p class="pk-error" id="pk-login-error"></p>
+  </div>
+
+  <!-- 登録（初回のみ） -->
+  <div class="card" id="pk-register-card" style="display:none">
+    <div class="card-title">初回登録</div>
+    <div class="field">
+      <label>号室番号＋氏名</label>
+      <input type="text" id="pk-username" placeholder="例: 101田中太郎" autocomplete="off">
+    </div>
+    <button class="btn-primary" id="pk-register-btn">パスキーを登録（Face ID）</button>
+    <p class="pk-link"><a href="#" id="pk-show-login">ログイン画面に戻る</a></p>
+    <p class="pk-error" id="pk-register-error"></p>
+  </div>
+</div>
+
+
+<!-- ================================================================
+     メインアプリ（認証後に表示）
+     ================================================================ -->
+<div id="main-app" style="display:none">
+
 <header>
   <span class="logo">🍱</span>
   <h1>食堂まとめ予約</h1>
+  <span class="user-badge" id="user-badge"></span>
 </header>
 
 <!-- ログイン情報 -->
@@ -250,32 +337,246 @@
   <ul id="result-list"></ul>
 </div>
 
-
 <!-- 開発者モード -->
 <div id="dev-bar" style="display:none;background:#fef3c7;border:1.5px solid #f59e0b;border-radius:10px;margin:8px 14px;padding:8px 14px;font-size:12px;font-weight:700;color:#92400e;text-align:center">
   開発者モード ON（実際の予約はされません）
 </div>
-<p style="text-align:center;padding:8px 0 16px">
+<p style="text-align:center;padding:8px 0 4px">
   <button id="dev-toggle" style="background:none;color:#d1d5db;border:none;font-size:11px;cursor:pointer">開発者モード</button>
 </p>
+<p style="text-align:center;padding:0 0 16px">
+  <button id="logout-btn" style="background:none;color:#d1d5db;border:none;font-size:11px;cursor:pointer">ログアウト</button>
+</p>
+
+</div><!-- #main-app -->
+
 
 <script>
-/* ================================================================
-   設定: デプロイ後に Render.com の URL を書き換えてください
-   ================================================================ */
-const DEFAULT_API = "https://dormitory-reserve.onrender.com";
-
+const API     = "https://dormitory-reserve.onrender.com";
 const WEEKDAY = ["日","月","火","水","木","金","土"];
 const B_PRICE = 300, D_PRICE = 500;
 
-// ── APIベースURL（localStorage で上書き可能） ──
-function getApiBase() {
-  return localStorage.getItem("apiBase") || DEFAULT_API;
+// ================================================================
+// Base64url ヘルパー
+// ================================================================
+function b64toBuf(s) {
+  return Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')), c => c.charCodeAt(0));
+}
+function bufToB64(buf) {
+  return btoa(String.fromCharCode(...new Uint8Array(buf)))
+    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+
+// ================================================================
+// セッション管理
+// ================================================================
+function getToken() { return localStorage.getItem("pk_token") || ""; }
+function setToken(t, username) {
+  localStorage.setItem("pk_token", t);
+  localStorage.setItem("pk_username", username);
+}
+function clearSession() {
+  localStorage.removeItem("pk_token");
+  localStorage.removeItem("pk_username");
+}
+
+// ================================================================
+// パスキー — 登録
+// ================================================================
+async function passkeyRegister(username) {
+  const startRes = await fetch(`${API}/passkey/register/start`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username }),
+  });
+  if (!startRes.ok) throw new Error((await startRes.json()).detail || "登録開始失敗");
+  const opts = await startRes.json();
+
+  const pubKey = {
+    challenge: b64toBuf(opts.challenge),
+    rp: opts.rp,
+    user: { ...opts.user, id: b64toBuf(opts.user.id) },
+    pubKeyCredParams: opts.pubKeyCredParams,
+    authenticatorSelection: opts.authenticatorSelection,
+    timeout: opts.timeout,
+    attestation: opts.attestation,
+  };
+
+  const cred = await navigator.credentials.create({ publicKey: pubKey });
+
+  const finishRes = await fetch(`${API}/passkey/register/finish`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      challenge_id: opts.challenge_id,
+      username,
+      credential: {
+        id: cred.id,
+        rawId: bufToB64(cred.rawId),
+        response: {
+          clientDataJSON: bufToB64(cred.response.clientDataJSON),
+          attestationObject: bufToB64(cred.response.attestationObject),
+        },
+        type: cred.type,
+      },
+    }),
+  });
+  if (!finishRes.ok) throw new Error((await finishRes.json()).detail || "登録完了失敗");
+  return await finishRes.json();
+}
+
+// ================================================================
+// パスキー — ログイン
+// ================================================================
+async function passkeyLogin() {
+  const startRes = await fetch(`${API}/passkey/login/start`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: "{}",
+  });
+  if (!startRes.ok) throw new Error((await startRes.json()).detail || "ログイン開始失敗");
+  const opts = await startRes.json();
+
+  const pubKey = {
+    challenge: b64toBuf(opts.challenge),
+    rpId: opts.rpId,
+    userVerification: opts.userVerification,
+    allowCredentials: [],
+    timeout: opts.timeout,
+  };
+
+  const assertion = await navigator.credentials.get({ publicKey: pubKey });
+
+  const finishRes = await fetch(`${API}/passkey/login/finish`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      challenge_id: opts.challenge_id,
+      credential: {
+        id: assertion.id,
+        rawId: bufToB64(assertion.rawId),
+        response: {
+          clientDataJSON: bufToB64(assertion.response.clientDataJSON),
+          authenticatorData: bufToB64(assertion.response.authenticatorData),
+          signature: bufToB64(assertion.response.signature),
+          userHandle: assertion.response.userHandle ? bufToB64(assertion.response.userHandle) : null,
+        },
+        type: assertion.type,
+      },
+    }),
+  });
+  if (!finishRes.ok) throw new Error((await finishRes.json()).detail || "認証失敗");
+  return await finishRes.json();
+}
+
+// ================================================================
+// 画面切替
+// ================================================================
+function showMainApp() {
+  document.getElementById("passkey-screen").style.display = "none";
+  document.getElementById("main-app").style.display = "block";
+  const username = localStorage.getItem("pk_username") || "";
+  document.getElementById("user-badge").textContent = username;
+  initMainApp();
+}
+
+function showPasskeyScreen() {
+  document.getElementById("main-app").style.display = "none";
+  document.getElementById("passkey-screen").style.display = "flex";
+}
+
+// ================================================================
+// パスキー画面 — イベント
+// ================================================================
+document.getElementById("pk-login-btn").addEventListener("click", async () => {
+  const btn = document.getElementById("pk-login-btn");
+  const err = document.getElementById("pk-login-error");
+  err.textContent = "";
+  btn.disabled = true;
+  btn.textContent = "認証中...";
+  try {
+    const data = await passkeyLogin();
+    setToken(data.token, data.username);
+    showMainApp();
+  } catch(e) {
+    err.textContent = e.message;
+    btn.disabled = false;
+    btn.textContent = "Face IDでログイン";
+  }
+});
+
+document.getElementById("pk-show-register").addEventListener("click", e => {
+  e.preventDefault();
+  document.getElementById("pk-login-card").style.display = "none";
+  document.getElementById("pk-register-card").style.display = "block";
+});
+
+document.getElementById("pk-show-login").addEventListener("click", e => {
+  e.preventDefault();
+  document.getElementById("pk-register-card").style.display = "none";
+  document.getElementById("pk-login-card").style.display = "block";
+});
+
+document.getElementById("pk-register-btn").addEventListener("click", async () => {
+  const username = document.getElementById("pk-username").value.trim();
+  const btn = document.getElementById("pk-register-btn");
+  const err = document.getElementById("pk-register-error");
+  err.textContent = "";
+  if (!username) { err.textContent = "号室番号＋氏名を入力してください"; return; }
+  btn.disabled = true;
+  btn.textContent = "登録中...";
+  try {
+    const data = await passkeyRegister(username);
+    setToken(data.token, data.username);
+    showMainApp();
+  } catch(e) {
+    err.textContent = e.message;
+    btn.disabled = false;
+    btn.textContent = "パスキーを登録（Face ID）";
+  }
+});
+
+// ================================================================
+// メインアプリ
+// ================================================================
+let devMode = false;
+
+function initMainApp() {
+  buildGrid();
+  loadCreds();
+  updateTotal();
+  ["f-email","f-phone","f-room"].forEach(x => id(x).addEventListener("input", updateTotal));
+  id("reserve-btn").addEventListener("click", runReservations);
+
+  id("logout-btn").addEventListener("click", () => {
+    clearSession();
+    showPasskeyScreen();
+  });
+
+  id("dev-toggle").addEventListener("click", e => {
+    e.preventDefault();
+    if (devMode) {
+      devMode = false;
+      id("dev-bar").style.display = "none";
+      id("dev-toggle").style.cssText = "background:none;color:#d1d5db;border:none;font-size:11px;cursor:pointer";
+      id("dev-toggle").textContent = "開発者モード";
+    } else {
+      const pw = prompt("パスワードを入力してください");
+      if (pw !== "sko1128@") { alert("パスワードが違います"); return; }
+      devMode = true;
+      id("dev-bar").style.display = "block";
+      id("dev-toggle").style.cssText = "background:#f59e0b;color:#fff;border:1px solid #f59e0b;font-size:11px;cursor:pointer;border-radius:6px;padding:3px 8px";
+      id("dev-toggle").textContent = "開発者モード ON";
+    }
+    id("grid-body").innerHTML = "";
+    buildGrid();
+    updateTotal();
+  });
 }
 
 // ── 締切判定 ──
 function canB(d) {
-  const dl = new Date(d); dl.setDate(dl.getDate() - 1); dl.setHours(9,0,0,0);  // 前日9:00 (実際は21:00だが安全側)
+  const dl = new Date(d); dl.setDate(dl.getDate() - 1); dl.setHours(9,0,0,0);
   return Date.now() < dl.getTime();
 }
 function canD(d) {
@@ -289,10 +590,10 @@ function getReservableDays() {
   const dow = today.getDay();
   let endDate = new Date(today);
   if (dow >= 1 && dow <= 3) {
-    endDate.setDate(today.getDate() + (5 - dow));         // 今週金
+    endDate.setDate(today.getDate() + (5 - dow));
   } else {
     const toMon = dow === 0 ? 1 : dow === 6 ? 2 : 8 - dow;
-    endDate.setDate(today.getDate() + toMon + 4);         // 来週金
+    endDate.setDate(today.getDate() + toMon + 4);
   }
   const days = [], d = new Date(today);
   d.setDate(d.getDate() + 1);
@@ -304,9 +605,7 @@ function getReservableDays() {
 }
 
 // ── 注文履歴 ──
-function getHistory() {
-  return JSON.parse(localStorage.getItem("orderHistory") || "{}");
-}
+function getHistory() { return JSON.parse(localStorage.getItem("orderHistory") || "{}"); }
 function saveHistory(date, meal) {
   const h = getHistory();
   h[`${date}_${meal}`] = true;
@@ -349,15 +648,15 @@ function updateTotal() {
 
 // ── 認証情報 保存/読み込み ──
 function saveCreds() {
-  const data = { email: f("f-email"), phone: f("f-phone"), room: f("f-room") };
-  localStorage.setItem("creds", JSON.stringify(data));
+  localStorage.setItem("creds", JSON.stringify({ email: f("f-email"), phone: f("f-phone"), room: f("f-room") }));
 }
 function loadCreds() {
   const data = JSON.parse(localStorage.getItem("creds") || "{}");
   if (data.email) { id("f-email").value = data.email; id("f-phone").value = data.phone; id("f-room").value = data.room; id("f-remember").checked = true; }
 }
-const id  = x => document.getElementById(x);
-const f   = x => id(x)?.value?.trim() || "";
+
+const id = x => document.getElementById(x);
+const f  = x => id(x)?.value?.trim() || "";
 
 // ── 予約実行 ──
 async function runReservations() {
@@ -377,13 +676,20 @@ async function runReservations() {
   const rl = id("result-list"); rl.innerHTML = "";
   id("prog-bar").style.width = "0";
 
-  const apiBase = getApiBase();
   try {
-    const resp = await fetch(`${apiBase}/reserve`, {
+    const resp = await fetch(`${API}/reserve`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ login: { email, phone, room }, items, dry_run: devMode })
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${getToken()}`,
+      },
+      body: JSON.stringify({ login: { email, phone, room }, items, dry_run: devMode }),
     });
+    if (resp.status === 401) {
+      clearSession();
+      showPasskeyScreen();
+      return;
+    }
     if (!resp.ok) throw new Error(`サーバーエラー (${resp.status})`);
     const data = await resp.json();
     data.results.forEach((r, i) => {
@@ -393,12 +699,8 @@ async function runReservations() {
       li.className = r.success ? "ok" : "ng";
       if (r.success && !devMode) {
         saveHistory(r.date, r.meal);
-        // グリッドのチェックボックスを即座に予約済みに切り替え
         const cb = document.querySelector(`.meal-cb[data-date="${r.date}"][data-meal="${r.meal}"]`);
-        if (cb) {
-          const td = cb.parentElement;
-          td.innerHTML = '<span class="closed">予約済</span>';
-        }
+        if (cb) cb.parentElement.innerHTML = '<span class="closed">予約済</span>';
       }
       li.innerHTML = r.success
         ? `<span>✅</span><span>${label}　予約完了</span>`
@@ -420,45 +722,22 @@ async function runReservations() {
   id("prog-bar").style.width = "100%";
   id("reserve-btn").disabled = false;
   id("reserve-btn").textContent = "予約する";
+  updateTotal();
 }
 
-
-// ── 初期化 ──
-let devMode = false;
-
+// ================================================================
+// 起動
+// ================================================================
 document.addEventListener("DOMContentLoaded", () => {
-  buildGrid(); loadCreds(); updateTotal();
-  ["f-email","f-phone","f-room"].forEach(x => id(x).addEventListener("input", updateTotal));
-  id("reserve-btn").addEventListener("click", runReservations);
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("./sw.js");
   }
 
-  // 開発者モード
-  id("dev-toggle").addEventListener("click", e => {
-    e.preventDefault();
-    if (devMode) {
-      devMode = false;
-      id("dev-bar").style.display = "none";
-      id("dev-toggle").style.background = "none";
-      id("dev-toggle").style.color = "#d1d5db";
-      id("dev-toggle").style.border = "none";
-      id("dev-toggle").textContent = "開発者モード";
-    } else {
-      const pw = prompt("パスワードを入力してください");
-      if (pw !== "sko1128@") { alert("パスワードが違います"); return; }
-      devMode = true;
-      id("dev-bar").style.display = "block";
-      id("dev-toggle").style.background = "#f59e0b";
-      id("dev-toggle").style.color = "#fff";
-      id("dev-toggle").style.borderColor = "#f59e0b";
-      id("dev-toggle").textContent = "開発者モード ON";
-    }
-    // グリッドを再描画（予約済み表示の切り替え）
-    id("grid-body").innerHTML = "";
-    buildGrid();
-    updateTotal();
-  });
+  const token = getToken();
+  if (token) {
+    showMainApp();
+  }
+  // トークンがなければ passkey-screen がデフォルト表示
 });
 </script>
 </body>
