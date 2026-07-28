@@ -394,7 +394,7 @@ async function passkeyRegister(username) {
     rp: opts.rp,
     user: { ...opts.user, id: b64toBuf(opts.user.id) },
     pubKeyCredParams: opts.pubKeyCredParams,
-    authenticatorSelection: opts.authenticatorSelection,
+    authenticatorSelection: { ...opts.authenticatorSelection, authenticatorAttachment: "platform" },
     timeout: opts.timeout,
     attestation: opts.attestation,
   };
@@ -552,8 +552,11 @@ document.getElementById("pk-register-btn").addEventListener("click", async () =>
 // メインアプリ
 // ================================================================
 let devMode = false;
+let mainInited = false;
 
 function initMainApp() {
+  if (mainInited) { buildGrid(); updateTotal(); return; }
+  mainInited = true;
   buildGrid();
   loadCreds();
   updateTotal();
@@ -630,6 +633,7 @@ function saveHistory(date, meal) {
 // ── グリッド生成 ──
 function buildGrid() {
   const tbody = document.getElementById("grid-body");
+  tbody.innerHTML = "";
   const history = getHistory();
   getReservableDays().forEach(d => {
     const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
