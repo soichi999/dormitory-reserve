@@ -469,6 +469,22 @@ async function passkeyLogin() {
   return await finishRes.json();
 }
 
+// ── エラーメッセージの日本語化 ──
+function jpError(e) {
+  const m = e.message || "";
+  if (e.name === "NotAllowedError" || m.includes("not allowed") || m.includes("timed out"))
+    return "認証がキャンセルされたか、時間切れになりました";
+  if (m.includes("Load failed") || m.includes("Failed to fetch") || m.includes("NetworkError"))
+    return "サーバーに接続できません。電波の良い場所でもう一度お試しください";
+  if (e.name === "InvalidStateError")
+    return "このパスキーはすでに登録されています";
+  if (e.name === "NotSupportedError")
+    return "この端末はパスキーに対応していません";
+  if (e.name === "SecurityError")
+    return "セキュリティエラーが発生しました。ページを開き直してください";
+  return m;  // サーバーからの日本語メッセージはそのまま表示
+}
+
 // ================================================================
 // 画面切替
 // ================================================================
@@ -499,7 +515,7 @@ document.getElementById("pk-login-btn").addEventListener("click", async () => {
     setToken(data.token, data.username);
     showMainApp();
   } catch(e) {
-    err.textContent = e.message;
+    err.textContent = jpError(e);
     btn.disabled = false;
     btn.textContent = "Face IDでログイン";
   }
@@ -529,7 +545,7 @@ document.getElementById("pk-register-btn").addEventListener("click", async () =>
     setToken(data.token, data.username);
     showMainApp();
   } catch(e) {
-    err.textContent = e.message;
+    err.textContent = jpError(e);
     btn.disabled = false;
     btn.textContent = "パスキーを登録（Face ID）";
   }
