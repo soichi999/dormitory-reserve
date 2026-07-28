@@ -3,7 +3,7 @@
   "short_name": "食堂予約",
   "description": "湘南藤沢国際寮の食堂予約を一括管理",
   "start_url": "./",
-  "display": "standalone",
+  "display": "browser",
   "background_color": "#ffffff",
   "theme_color": "#2563eb",
   "icons": [
