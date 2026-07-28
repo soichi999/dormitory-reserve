@@ -7,7 +7,7 @@ self.addEventListener("install", e =>
 
 self.addEventListener("fetch", e => {
   // API リクエストはキャッシュしない
-  if (e.request.url.includes("/reserve") || e.request.url.includes("/health")) return;
+  if (e.request.url.includes("onrender.com")) return;
   e.respondWith(
     fetch(e.request).catch(() => caches.match(e.request))
   );
