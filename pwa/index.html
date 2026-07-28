@@ -256,7 +256,7 @@
   <!-- ログイン -->
   <div class="card" id="pk-login-card">
     <button class="btn-primary" id="pk-login-btn">Face IDでログイン</button>
-    <p class="pk-link">初めての方 → <a href="#" id="pk-show-register">パスキーを登録</a></p>
+    <button id="pk-show-register" style="display:block;width:100%;margin-top:10px;padding:13px;background:#fff;color:var(--blue);border:2px solid var(--blue);border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;">初めての方はこちら（パスキー登録）</button>
     <p class="pk-error" id="pk-login-error"></p>
   </div>
 
@@ -505,8 +505,7 @@ document.getElementById("pk-login-btn").addEventListener("click", async () => {
   }
 });
 
-document.getElementById("pk-show-register").addEventListener("click", e => {
-  e.preventDefault();
+document.getElementById("pk-show-register").addEventListener("click", () => {
   document.getElementById("pk-login-card").style.display = "none";
   document.getElementById("pk-register-card").style.display = "block";
 });
@@ -740,11 +739,7 @@ document.addEventListener("DOMContentLoaded", () => {
     navigator.serviceWorker.register("./sw.js");
   }
 
-  const token = getToken();
-  if (token) {
-    showMainApp();
-  }
-  // トークンがなければ passkey-screen がデフォルト表示
+  // 開くたびに必ずパスキー認証を要求する（自動ログインなし）
 });
 </script>
 </body>
