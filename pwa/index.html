@@ -229,8 +229,8 @@
       font-size: 12px;
       text-align: center;
       margin-top: 10px;
-      min-height: 18px;
     }
+    .pk-error:empty { display: none; }
     .pk-link {
       display: block;
       text-align: center;
@@ -343,9 +343,6 @@
 </div>
 <p style="text-align:center;padding:8px 0 4px">
   <button id="dev-toggle" style="background:none;color:#d1d5db;border:none;font-size:11px;cursor:pointer">開発者モード</button>
-</p>
-<p style="text-align:center;padding:0 0 16px">
-  <button id="logout-btn" style="background:none;color:#d1d5db;border:none;font-size:11px;cursor:pointer">ログアウト</button>
 </p>
 
 </div><!-- #main-app -->
@@ -570,10 +567,6 @@ function initMainApp() {
   });
   id("reserve-btn").addEventListener("click", runReservations);
 
-  id("logout-btn").addEventListener("click", () => {
-    clearSession();
-    showPasskeyScreen();
-  });
 
   id("dev-toggle").addEventListener("click", e => {
     e.preventDefault();
