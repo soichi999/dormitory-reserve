@@ -545,7 +545,14 @@ function initMainApp() {
   buildGrid();
   loadCreds();
   updateTotal();
-  ["f-email","f-phone","f-room"].forEach(x => id(x).addEventListener("input", updateTotal));
+  ["f-email","f-phone","f-room"].forEach(x => id(x).addEventListener("input", () => {
+    updateTotal();
+    if (id("f-remember").checked) saveCreds();
+  }));
+  id("f-remember").addEventListener("change", () => {
+    if (id("f-remember").checked) saveCreds();
+    else localStorage.removeItem("creds");
+  });
   id("reserve-btn").addEventListener("click", runReservations);
 
   id("logout-btn").addEventListener("click", () => {
