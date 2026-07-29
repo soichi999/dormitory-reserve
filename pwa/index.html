@@ -549,8 +549,8 @@
     <h1>食堂まとめ予約</h1>
     <p style="font-size:13px;color:rgba(255,255,255,.7);">湘南藤沢国際学生寮</p>
     <div style="position:absolute;bottom:16px;right:16px;text-align:right;line-height:1.5;">
-      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);">ver.2.2.0</div>
-      <div style="font-size:10px;color:rgba(255,255,255,.6);">2026.7.29 17:10</div>
+      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);">ver.2.2.1</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.6);">2026.7.29 17:20</div>
     </div>
   </div>
 
@@ -900,7 +900,7 @@ function isSessionValid() {
   const token = localStorage.getItem("pk_token");
   const loginTime = parseInt(localStorage.getItem("pk_login_time") || "0", 10);
   if (!token || !loginTime) return false;
-  return Date.now() - loginTime < 5 * 24 * 60 * 60 * 1000; // 5日
+  return Date.now() - loginTime < 3 * 24 * 60 * 60 * 1000; // 3日
 }
 
 // ================================================================
