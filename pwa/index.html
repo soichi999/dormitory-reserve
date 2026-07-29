@@ -659,6 +659,11 @@
 
     <div style="margin-top:auto;padding:16px 20px;border-top:1px solid var(--border);">
       <button id="dev-toggle" style="background:none;color:#d1d5db;border:none;font-size:11px;cursor:pointer;padding:0;">開発者モード</button>
+      <div id="dev-pw-form" style="display:none;margin-top:10px;">
+        <input id="dev-pw-input" type="password" placeholder="パスワード" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;outline:none;background:var(--bg);color:var(--text);margin-bottom:6px;">
+        <p id="dev-pw-error" style="color:var(--red);font-size:11px;margin-bottom:6px;display:none;">パスワードが違います</p>
+        <button id="dev-pw-submit" class="btn-primary" style="padding:10px;font-size:14px;">確認</button>
+      </div>
     </div>
   </div>
 </div>
@@ -831,18 +836,6 @@
 </div><!-- #main-app -->
 
 <!-- 開発者モード パスワードモーダル -->
-<div class="modal" id="modal-devpw">
-  <div class="modal-overlay" id="close-devpw-overlay"></div>
-  <div class="modal-panel" style="border-radius:16px;bottom:auto;top:50%;transform:translateY(-50%);max-width:320px;margin:0 auto;left:16px;right:16px;">
-    <div style="padding:24px 20px 20px;">
-      <div style="font-size:15px;font-weight:700;margin-bottom:16px;color:var(--text);">開発者モード</div>
-      <input id="dev-pw-input" type="password" placeholder="パスワード" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;font-size:15px;outline:none;background:var(--bg);color:var(--text);margin-bottom:8px;">
-      <p id="dev-pw-error" style="color:var(--red);font-size:12px;margin-bottom:10px;display:none;">パスワードが違います</p>
-      <button onclick="submitDevPw()" class="btn-primary" style="padding:12px;">確認</button>
-    </div>
-  </div>
-</div>
-
 <!-- エラー詳細モーダル -->
 <div id="error-detail-modal" style="display:none;position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;padding:24px;">
   <div style="position:absolute;inset:0;background:rgba(0,0,0,.5);" onclick="closeErrorDetail()"></div>
@@ -1342,38 +1335,40 @@ function initMainApp() {
   });
 
   // ── 開発者モード ──
-  document.getElementById("close-devpw-overlay").addEventListener("click", () => closeModal("modal-devpw"));
-
-  window.submitDevPw = function() {
+  function submitDevPw() {
     const pw = id("dev-pw-input").value;
-    const errEl = id("dev-pw-error");
     if (pw !== "sko1128@") {
-      errEl.style.display = "block";
+      id("dev-pw-error").style.display = "block";
       id("dev-pw-input").value = "";
       return;
     }
-    closeModal("modal-devpw");
+    id("dev-pw-form").style.display = "none";
     id("dev-pw-input").value = "";
-    errEl.style.display = "none";
+    id("dev-pw-error").style.display = "none";
+    drawer.classList.remove("open");
     devMode = true;
     id("dev-bar").style.display = "block";
     id("dev-toggle").style.cssText = "background:#f59e0b;color:#fff;border:1px solid #f59e0b;font-size:11px;cursor:pointer;border-radius:6px;padding:3px 8px;";
     id("dev-toggle").textContent = "開発者モード ON";
     buildGrid(); updateTotal();
-  };
+  }
+  id("dev-pw-submit").addEventListener("click", submitDevPw);
   id("dev-pw-input").addEventListener("keydown", e => { if (e.key === "Enter") submitDevPw(); });
 
   id("dev-toggle").addEventListener("click", () => {
     if (devMode) {
-      drawer.classList.remove("open");
       devMode = false;
       id("dev-bar").style.display = "none";
       id("dev-toggle").style.cssText = "background:none;color:#d1d5db;border:none;font-size:11px;cursor:pointer;padding:0;";
       id("dev-toggle").textContent = "開発者モード";
+      id("dev-pw-form").style.display = "none";
+      drawer.classList.remove("open");
       buildGrid(); updateTotal();
     } else {
-      openModal("modal-devpw");
-      setTimeout(() => id("dev-pw-input").focus(), 100);
+      id("dev-pw-form").style.display = "block";
+      id("dev-pw-error").style.display = "none";
+      id("dev-pw-input").value = "";
+      setTimeout(() => id("dev-pw-input").focus(), 50);
     }
   });
 }
