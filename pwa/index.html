@@ -559,8 +559,8 @@
     <h1>食堂まとめ予約</h1>
     <p style="font-size:13px;color:rgba(255,255,255,.7);">湘南藤沢国際学生寮</p>
     <div style="position:absolute;bottom:16px;right:16px;text-align:right;line-height:1.5;">
-      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);">ver.2.5.1</div>
-      <div style="font-size:10px;color:rgba(255,255,255,.6);">2026.7.29 15:41</div>
+      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);">ver.2.5.2</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.6);">2026.7.29 15:55</div>
     </div>
   </div>
 
@@ -836,7 +836,7 @@
 
 <!-- 予約ボタン -->
 <button id="reserve-btn">予約する</button>
-<div id="deadline-info" style="display:none;margin:8px 14px 0;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;color:var(--gray);line-height:1.9;background:var(--bg);"></div>
+<div id="deadline-info" style="display:none;margin:8px 14px 0;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;line-height:1.8;background:var(--bg);"></div>
 
 <!-- 進捗・結果 -->
 <div class="card" id="progress-card">
@@ -1386,9 +1386,17 @@ function countdownText(d, isBreakfast) {
   if (diff <= 0) return null;
   const h = Math.floor(diff / 3600000);
   const m = Math.floor((diff % 3600000) / 60000);
-  if (h >= 24) return null; // 1日以上先は表示しない
-  if (h > 0) return `あと${h}時間${m}分`;
+  if (h >= 24) return null;
+  if (h >= 1) return `あと${h}時間`;
   return `あと${m}分`;
+}
+
+// ── 締切タイムスタンプ取得 ──
+function deadlineTime(d, isBreakfast) {
+  const dl = new Date(d);
+  if (isBreakfast) dl.setDate(dl.getDate() - 1);
+  dl.setHours(8,50,0,0);
+  return dl.getTime();
 }
 
 // ── 今月合計 ──
@@ -1460,18 +1468,29 @@ function buildGrid() {
 function updateDeadlineInfo() {
   const el = document.getElementById("deadline-info");
   if (!el) return;
-  const lines = [];
+  const dark = document.body.classList.contains("dark");
+  // 締切ごとにグループ化
+  const groups = {}; // deadlineTime -> { cd, labels[] }
   getReservableDays().forEach(d => {
     const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-    const label = `${d.getMonth()+1}/${d.getDate()}（${WEEKDAY[d.getDay()]}）`;
-    const cdB = countdownText(key, true);
-    const cdD = countdownText(key, false);
-    if (cdB) lines.push(`${label}朝　締切まで${cdB}`);
-    if (cdD) lines.push(`${label}夜　締切まで${cdD}`);
+    const dateLabel = `${d.getMonth()+1}/${d.getDate()}（${WEEKDAY[d.getDay()]}）`;
+    [["朝", true], ["夜", false]].forEach(([mealLabel, isB]) => {
+      const cd = countdownText(key, isB);
+      if (!cd) return;
+      const ts = deadlineTime(key, isB);
+      if (!groups[ts]) groups[ts] = { cd, labels: [] };
+      groups[ts].labels.push(`${dateLabel}${mealLabel}`);
+    });
   });
-  if (!lines.length) { el.style.display = "none"; return; }
+  const entries = Object.values(groups);
+  if (!entries.length) { el.style.display = "none"; return; }
   el.style.display = "block";
-  el.innerHTML = lines.join("<br>");
+  el.innerHTML = entries.map(g => {
+    const pills = g.labels.map(l =>
+      `<span style="font-size:11px;font-weight:700;color:var(--blue);background:${dark ? "#1e3a5f" : "#eff6ff"};padding:3px 8px;border-radius:20px;white-space:nowrap;">${l}</span>`
+    ).join(" ");
+    return `<div style="margin-bottom:6px;">${pills}<br><span style="font-size:12px;color:var(--gray);">締切まで${g.cd}</span></div>`;
+  }).join("");
 }
 
 // ── 合計更新 ──
