@@ -549,8 +549,8 @@
     <h1>食堂まとめ予約</h1>
     <p style="font-size:13px;color:rgba(255,255,255,.7);">湘南藤沢国際学生寮</p>
     <div style="position:absolute;bottom:16px;right:16px;text-align:right;line-height:1.5;">
-      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);">ver.2.3.1</div>
-      <div style="font-size:10px;color:rgba(255,255,255,.6);">2026.7.29 18:25</div>
+      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);">ver.2.3.2</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.6);">2026.7.29 18:40</div>
     </div>
   </div>
 
@@ -639,11 +639,19 @@
         <h2>食堂まとめ予約</h2>
         <p id="drawer-username"></p>
       </div>
-      <span style="font-size:10px;font-weight:600;color:var(--gray);padding-top:2px;">ver.2.3.1</span>
+      <span style="font-size:10px;font-weight:600;color:var(--gray);padding-top:2px;">ver.2.3.2</span>
     </div>
     <button class="drawer-item" id="open-history">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       注文履歴
+    </button>
+    <button class="drawer-item" id="open-guide">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      使い方ガイド
+    </button>
+    <button class="drawer-item" id="open-homescreen">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      ホーム画面に追加
     </button>
     <button class="drawer-item" id="open-terms">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
@@ -845,6 +853,22 @@
       </div>
     </div>
     <button id="guide-close-btn" class="btn-primary">はじめる</button>
+  </div>
+</div>
+
+<!-- ホーム画面追加ガイド -->
+<div id="homescreen-overlay" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.6);align-items:center;justify-content:center;padding:24px;">
+  <div style="background:var(--card);border-radius:20px;padding:24px;max-width:340px;width:100%;">
+    <div style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:14px;">ホーム画面に追加</div>
+    <div style="font-size:12px;color:var(--gray);line-height:1.8;margin-bottom:20px;">
+      <b style="color:var(--text);">Safari の場合</b><br>
+      画面下部の共有ボタン（四角に矢印）をタップ<br>
+      →「ホーム画面に追加」を選択<br><br>
+      <b style="color:var(--text);">Chrome の場合</b><br>
+      右上のメニュー（︙）をタップ<br>
+      →「ホーム画面に追加」を選択
+    </div>
+    <button id="homescreen-close-btn" class="btn-primary">閉じる</button>
   </div>
 </div>
 
@@ -1396,6 +1420,14 @@ function initMainApp() {
   });
   document.getElementById("close-history").addEventListener("click", () => closeModal("modal-history"));
   document.getElementById("close-history-overlay").addEventListener("click", () => closeModal("modal-history"));
+  document.getElementById("open-guide").addEventListener("click", () => {
+    drawer.classList.remove("open");
+    document.getElementById("guide-overlay").style.display = "flex";
+  });
+  document.getElementById("open-homescreen").addEventListener("click", () => {
+    drawer.classList.remove("open");
+    document.getElementById("homescreen-overlay").style.display = "flex";
+  });
   document.getElementById("logout-btn").addEventListener("click", () => {
     drawer.classList.remove("open");
     clearSession();
@@ -1749,6 +1781,9 @@ function checkNotifications() {
 document.getElementById("guide-close-btn").addEventListener("click", () => {
   document.getElementById("guide-overlay").style.display = "none";
   localStorage.setItem("guideShown", "1");
+});
+document.getElementById("homescreen-close-btn").addEventListener("click", () => {
+  document.getElementById("homescreen-overlay").style.display = "none";
 });
 
 document.addEventListener("DOMContentLoaded", () => {
