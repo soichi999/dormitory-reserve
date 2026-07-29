@@ -82,8 +82,11 @@
 
     /* ── Dark mode: passkey screen ── */
     body.dark #passkey-screen {
+      background: #1f2937;
+    }
+    body.dark .pk-top {
       background: linear-gradient(to bottom, rgba(0,0,0,.65) 0%, rgba(0,0,0,.4) 100%),
-                  url('./bg.jpg') center top / 100% auto no-repeat;
+                  url('./bg.jpg') center center / cover no-repeat;
     }
 
     /* ── Notification toggles in drawer ── */
@@ -128,8 +131,7 @@
       min-height: 100dvh;
       display: flex;
       flex-direction: column;
-      background: linear-gradient(to bottom, rgba(0,0,0,.45) 0%, rgba(0,0,0,.2) 100%),
-                  url('./bg.jpg') center top / 100% auto no-repeat;
+      background: #fff;
     }
 
     .pk-top {
@@ -140,6 +142,8 @@
       justify-content: center;
       padding: calc(env(safe-area-inset-top) + 40px) 24px 32px;
       position: relative;
+      background: linear-gradient(to bottom, rgba(0,0,0,.45) 0%, rgba(0,0,0,.2) 100%),
+                  url('./bg.jpg') center center / cover no-repeat;
     }
 
     .pk-icon-wrap {
@@ -554,8 +558,8 @@
     <h1>食堂まとめ予約</h1>
     <p style="font-size:13px;color:rgba(255,255,255,.7);">湘南藤沢国際学生寮</p>
     <div style="position:absolute;bottom:16px;right:16px;text-align:right;line-height:1.5;">
-      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);">ver.2.4.4</div>
-      <div style="font-size:10px;color:rgba(255,255,255,.6);">2026.7.29 16:10</div>
+      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);">ver.2.4.5</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.6);">2026.7.29 16:20</div>
     </div>
   </div>
 
