@@ -1425,6 +1425,29 @@ function initMainApp() {
       return `<button onclick="renderHistory('${ym}')" style="padding:5px 12px;border-radius:20px;border:1.5px solid ${active ? "var(--blue)" : "var(--border)"};background:${active ? "var(--blue)" : "transparent"};color:${active ? "#fff" : "var(--gray)"};font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">${label}</button>`;
     }).join("");
 
+    // 月別合計を集計してグラフ生成
+    const monthTotals = months.map(ym => ({
+      ym,
+      label: `${parseInt(ym.split("-")[1])}月`,
+      total: allEntries.filter(k => k.split("_")[0].startsWith(ym))
+                       .reduce((s, k) => s + (k.split("_")[1] === "breakfast" ? B_PRICE : D_PRICE), 0)
+    })).slice(0, 6).reverse(); // 最大6ヶ月、古い順
+    const maxTotal = Math.max(...monthTotals.map(m => m.total), 1);
+    const graphHtml = `<div style="margin-bottom:16px;padding:14px;background:var(--bg2,var(--bg));border:1.5px solid var(--border);border-radius:12px;">
+      <div style="font-size:11px;font-weight:700;color:var(--gray);margin-bottom:10px;">月別支出</div>
+      ${monthTotals.map(({ ym, label, total }) => {
+        const pct = Math.round(total / maxTotal * 100);
+        const active = ym === activeYm;
+        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer;" onclick="renderHistory('${ym}')">
+          <div style="width:28px;font-size:11px;font-weight:700;color:${active ? "var(--blue)" : "var(--gray)"};text-align:right;flex-shrink:0;">${label}</div>
+          <div style="flex:1;background:var(--border);border-radius:4px;height:14px;overflow:hidden;">
+            <div style="width:${pct}%;height:100%;background:${active ? "var(--blue)" : "#93c5fd"};border-radius:4px;transition:width .3s;"></div>
+          </div>
+          <div style="width:52px;font-size:11px;font-weight:700;color:${active ? "var(--blue)" : "var(--gray)"};text-align:right;flex-shrink:0;">${total.toLocaleString()}円</div>
+        </div>`;
+      }).join("")}
+    </div>`;
+
     const entries = allEntries.filter(k => k.split("_")[0].startsWith(activeYm));
     const monthlyTotal = entries.reduce((sum, k) => {
       return sum + (k.split("_")[1] === "breakfast" ? B_PRICE : D_PRICE);
@@ -1454,6 +1477,7 @@ function initMainApp() {
     }).join("");
 
     body.innerHTML = `
+      ${months.length > 1 ? graphHtml : ""}
       <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;margin-bottom:4px;">${btnHtml}</div>
       ${listHtml}
       <div style="padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:baseline;">
