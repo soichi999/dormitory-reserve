@@ -640,7 +640,7 @@
   </button>
 </header>
 
-<!-- ハンバーガーメニュー引き出し -->
+<!-- 右上のメニュー引き出し -->
 <div id="menu-drawer">
   <div class="drawer-overlay" id="drawer-overlay"></div>
   <div class="drawer-panel">
@@ -1159,7 +1159,7 @@ function initMainApp() {
     applyDark(!document.body.classList.contains("dark"));
   });
 
-  // ── ハンバーガーメニュー ──
+  // ── 右上のメニュー ──
   const drawer = document.getElementById("menu-drawer");
   document.getElementById("menu-btn").addEventListener("click", () => drawer.classList.add("open"));
   document.getElementById("drawer-overlay").addEventListener("click", () => drawer.classList.remove("open"));
@@ -1197,7 +1197,7 @@ function initMainApp() {
     {
       date: "2026.7.29", ver: "ver.2.1.0",
       title: "ダークモード・注文履歴・新着情報・予約確認を追加",
-      body: "ハンバーガーメニューから注文履歴の確認、ダークモードへの切替ができるようになりました。また予約ボタンを押したあとに確認ダイアログが表示されます。さらにヘッダー右上にベルアイコンを追加し、新着情報をそこから確認できるようにしました。",
+      body: "右上のメニューから注文履歴の確認、ダークモードへの切替ができるようになりました。また予約ボタンを押したあとに確認ダイアログが表示されます。さらにヘッダー右上にベルアイコンを追加し、新着情報をそこから確認できるようにしました。",
     },
     {
       date: "2026.7.28", ver: "ver.2.0.0",
@@ -1207,7 +1207,7 @@ function initMainApp() {
     {
       date: "2026.7.26", ver: "ver.1.1.0",
       title: "利用規約・プライバシーポリシーを追加",
-      body: "ハンバーガーメニューから利用規約とプライバシーポリシーが確認できるようになりました。本サービスはメールアドレス・電話番号・注文履歴をスマホ内にのみ保存しており、外部サーバーへの送信は行いません。",
+      body: "右上のメニューから利用規約とプライバシーポリシーが確認できるようになりました。本サービスはメールアドレス・電話番号・注文履歴をスマホ内にのみ保存しており、外部サーバーへの送信は行いません。",
     },
     {
       date: "2026.7.13", ver: "ver.1.0.0",
