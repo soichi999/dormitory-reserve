@@ -80,6 +80,48 @@
     body.dark #dev-bar { background: #292524; border-color: #78350f; color: #fbbf24; }
     body.dark p[style*="9ca3af"] { color: #6b7280 !important; }
 
+    /* ── Dark mode: passkey screen ── */
+    body.dark #passkey-screen {
+      background: linear-gradient(160deg, #0f172a 0%, #1e293b 45%, #334155 100%);
+    }
+
+    /* ── Notification toggles in drawer ── */
+    .drawer-section-label {
+      padding: 10px 20px 4px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--gray);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    .notif-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      gap: 12px;
+    }
+    .notif-row-text { flex: 1; }
+    .notif-row-text span { display: block; font-size: 13px; font-weight: 600; color: var(--text); }
+    .notif-row-text small { display: block; font-size: 11px; color: var(--gray); margin-top: 2px; }
+    .toggle-sw { position: relative; width: 44px; height: 26px; flex-shrink: 0; }
+    .toggle-sw input { display: none; }
+    .toggle-track {
+      position: absolute; inset: 0;
+      background: #d1d5db; border-radius: 13px;
+      cursor: pointer; transition: background .2s;
+    }
+    .toggle-track::after {
+      content: ''; position: absolute;
+      top: 3px; left: 3px;
+      width: 20px; height: 20px;
+      background: #fff; border-radius: 50%;
+      transition: transform .2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,.3);
+    }
+    .toggle-sw input:checked + .toggle-track { background: var(--blue); }
+    .toggle-sw input:checked + .toggle-track::after { transform: translateX(18px); }
+
     /* ── Passkey screen ── */
     #passkey-screen {
       min-height: 100dvh;
@@ -600,6 +642,30 @@
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
       プライバシーポリシー
     </button>
+
+    <!-- 通知設定 -->
+    <div class="drawer-section-label" style="margin-top:8px;border-top:1px solid var(--border);padding-top:14px;">通知</div>
+    <div class="notif-row">
+      <div class="notif-row-text">
+        <span>来週の食事可能通知</span>
+        <small>毎週木曜17時頃にお知らせ</small>
+      </div>
+      <label class="toggle-sw">
+        <input type="checkbox" id="notif-weekly">
+        <div class="toggle-track"></div>
+      </label>
+    </div>
+    <div class="notif-row">
+      <div class="notif-row-text">
+        <span>食事締切リマインダー</span>
+        <small>各食事の締切3時間前にお知らせ</small>
+      </div>
+      <label class="toggle-sw">
+        <input type="checkbox" id="notif-reminder">
+        <div class="toggle-track"></div>
+      </label>
+    </div>
+
     <div style="margin-top:auto;padding:16px 20px;border-top:1px solid var(--border);">
       <button id="dev-toggle" style="background:none;color:#d1d5db;border:none;font-size:11px;cursor:pointer;padding:0;">開発者モード</button>
     </div>
@@ -1004,47 +1070,10 @@ function initMainApp() {
   // ── モーダル ──
   window.openModal = function(id) {
     drawer.classList.remove("open");
-    const modal = document.getElementById(id);
-    modal.classList.add("open");
-    // スワイプで閉じる
-    const panel = modal.querySelector(".modal-panel");
-    let startY = 0, dragging = false;
-    function onStart(e) {
-      startY = (e.touches ? e.touches[0].clientY : e.clientY);
-      dragging = true;
-      panel.style.transition = "none";
-    }
-    function onMove(e) {
-      if (!dragging) return;
-      const dy = (e.touches ? e.touches[0].clientY : e.clientY) - startY;
-      if (dy > 0) panel.style.transform = `translateY(${dy}px)`;
-    }
-    function onEnd(e) {
-      if (!dragging) return;
-      dragging = false;
-      panel.style.transition = "";
-      const dy = (e.changedTouches ? e.changedTouches[0].clientY : e.clientY) - startY;
-      if (dy > 80) {
-        panel.style.transform = "";
-        closeModal(id);
-      } else {
-        panel.style.transform = "";
-      }
-    }
-    panel.addEventListener("touchstart", onStart, { passive: true });
-    panel.addEventListener("touchmove", onMove, { passive: true });
-    panel.addEventListener("touchend", onEnd);
-    modal._cleanup = () => {
-      panel.removeEventListener("touchstart", onStart);
-      panel.removeEventListener("touchmove", onMove);
-      panel.removeEventListener("touchend", onEnd);
-      panel.style.transform = "";
-    };
+    document.getElementById(id).classList.add("open");
   }
   window.closeModal = function(id) {
-    const modal = document.getElementById(id);
-    modal.classList.remove("open");
-    if (modal._cleanup) { modal._cleanup(); modal._cleanup = null; }
+    document.getElementById(id).classList.remove("open");
   }
   document.getElementById("open-history").addEventListener("click", () => {
     // 履歴を描画してから開く
@@ -1079,6 +1108,46 @@ function initMainApp() {
   document.getElementById("close-terms-overlay").addEventListener("click", () => closeModal("modal-terms"));
   document.getElementById("close-privacy").addEventListener("click", () => closeModal("modal-privacy"));
   document.getElementById("close-privacy-overlay").addEventListener("click", () => closeModal("modal-privacy"));
+
+  // ── 通知設定 ──
+  const notifWeeklyEl   = id("notif-weekly");
+  const notifReminderEl = id("notif-reminder");
+  notifWeeklyEl.checked   = localStorage.getItem("notifyWeekly") !== "0";
+  notifReminderEl.checked = localStorage.getItem("notifyMealReminder") === "1";
+
+  async function ensureNotifPermission(inputEl) {
+    if (!("Notification" in window)) {
+      alert("このブラウザは通知に対応していません");
+      inputEl.checked = false;
+      return false;
+    }
+    if (Notification.permission === "denied") {
+      alert("通知がブロックされています。ブラウザの設定から通知を許可してください。");
+      inputEl.checked = false;
+      return false;
+    }
+    if (Notification.permission !== "granted") {
+      const r = await Notification.requestPermission();
+      if (r !== "granted") {
+        inputEl.checked = false;
+        return false;
+      }
+    }
+    return true;
+  }
+
+  notifWeeklyEl.addEventListener("change", async () => {
+    if (notifWeeklyEl.checked) {
+      if (!await ensureNotifPermission(notifWeeklyEl)) return;
+    }
+    localStorage.setItem("notifyWeekly", notifWeeklyEl.checked ? "1" : "0");
+  });
+  notifReminderEl.addEventListener("change", async () => {
+    if (notifReminderEl.checked) {
+      if (!await ensureNotifPermission(notifReminderEl)) return;
+    }
+    localStorage.setItem("notifyMealReminder", notifReminderEl.checked ? "1" : "0");
+  });
 
   // ── 開発者モード ──
   id("dev-toggle").addEventListener("click", e => {
@@ -1281,6 +1350,54 @@ async function runReservations() {
 }
 
 // ================================================================
+// 通知チェック（アプリを開いたタイミングで確認）
+// ================================================================
+function fireNotif(title, body) {
+  if (!("Notification" in window) || Notification.permission !== "granted") return;
+  new Notification(title, { body, icon: "./icon.svg" });
+}
+
+function checkNotifications() {
+  const weekly   = localStorage.getItem("notifyWeekly") !== "0";
+  const reminder = localStorage.getItem("notifyMealReminder") === "1";
+  if (!weekly && !reminder) return;
+  if (!("Notification" in window) || Notification.permission !== "granted") return;
+
+  const now     = new Date();
+  const dow     = now.getDay();  // 0=日 4=木
+  const hour    = now.getHours();
+  const todayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+
+  // 来週の食事可能通知：木曜 17:00〜23:59
+  if (weekly && dow === 4 && hour >= 17) {
+    if (localStorage.getItem("lastWeeklyNotif") !== todayKey) {
+      fireNotif("食堂まとめ予約", "来週の食事予約が可能になりました！");
+      localStorage.setItem("lastWeeklyNotif", todayKey);
+    }
+  }
+
+  // 食事締切リマインダー：締切3時間前（= 各日 06:00〜06:59）
+  if (reminder && hour === 6) {
+    if (localStorage.getItem("lastReminderNotif") !== todayKey) {
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tDow = tomorrow.getDay();
+      // 明日が平日 → 朝食締切は「今日の9時」なので3時間前 = 今朝6時
+      if (tDow >= 1 && tDow <= 5) {
+        fireNotif("食堂まとめ予約",
+          `明日（${tomorrow.getMonth()+1}/${tomorrow.getDate()}）朝食の予約締切は今日9:00です`);
+      }
+      // 今日が平日 → 夕食締切は「今日の9時」
+      if (dow >= 1 && dow <= 5) {
+        fireNotif("食堂まとめ予約",
+          `本日（${now.getMonth()+1}/${now.getDate()}）夕食の予約締切は今日9:00です`);
+      }
+      localStorage.setItem("lastReminderNotif", todayKey);
+    }
+  }
+}
+
+// ================================================================
 // 起動
 // ================================================================
 document.addEventListener("DOMContentLoaded", () => {
@@ -1292,6 +1409,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.body.classList.add("dark");
   }
   // 開くたびに必ずパスキー認証を要求する（自動ログインなし）
+  checkNotifications();
 });
 </script>
 </body>
