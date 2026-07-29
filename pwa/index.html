@@ -1353,8 +1353,7 @@ function initMainApp() {
   };
   id("dev-pw-input").addEventListener("keydown", e => { if (e.key === "Enter") submitDevPw(); });
 
-  id("dev-toggle").addEventListener("click", e => {
-    e.preventDefault();
+  id("dev-toggle").addEventListener("click", () => {
     drawer.classList.remove("open");
     if (devMode) {
       devMode = false;
@@ -1363,9 +1362,10 @@ function initMainApp() {
       id("dev-toggle").textContent = "開発者モード";
       buildGrid(); updateTotal();
     } else {
-      const modal = document.getElementById("dev-pw-modal");
-      modal.style.display = "flex";
-      setTimeout(() => id("dev-pw-input").focus(), 100);
+      setTimeout(() => {
+        document.getElementById("dev-pw-modal").style.display = "flex";
+        id("dev-pw-input").focus();
+      }, 150);
     }
   });
 }
