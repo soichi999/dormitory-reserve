@@ -81,8 +81,9 @@
     body.dark p[style*="9ca3af"] { color: #6b7280 !important; }
 
     /* ── Dark mode: passkey screen ── */
-    body.dark #passkey-screen {
-      background: linear-gradient(160deg, #374151 0%, #4b5563 45%, #6b7280 100%);
+    body.dark .pk-top {
+      background: linear-gradient(to bottom, rgba(0,0,0,.65) 0%, rgba(0,0,0,.4) 100%),
+                  url('./bg.jpg') center center / cover no-repeat;
     }
 
     /* ── Notification toggles in drawer ── */
@@ -127,7 +128,7 @@
       min-height: 100dvh;
       display: flex;
       flex-direction: column;
-      background: linear-gradient(160deg, #1e40af 0%, #2563eb 45%, #3b82f6 100%);
+      background: #1e40af;
     }
 
     .pk-top {
@@ -137,6 +138,8 @@
       align-items: center;
       justify-content: center;
       padding: calc(env(safe-area-inset-top) + 40px) 24px 32px;
+      background: linear-gradient(to bottom, rgba(0,0,0,.45) 0%, rgba(0,0,0,.2) 100%),
+                  url('./bg.jpg') center center / cover no-repeat;
     }
 
     .pk-icon-wrap {
@@ -549,7 +552,7 @@
       <span style="font-size:44px;line-height:1;">🍱</span>
     </div>
     <h1>食堂まとめ予約</h1>
-    <p>ver.2.4.0</p>
+    <p>ver.2.4.2　<span style="font-size:11px;opacity:.7;">2026.7.29 15:06</span></p>
   </div>
 
   <div class="pk-bottom">

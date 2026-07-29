@@ -1,5 +1,5 @@
 const CACHE = "shokudo-v4";
-const ASSETS = ["./", "./index.html", "./manifest.json", "./icon.svg"];
+const ASSETS = ["./", "./index.html", "./manifest.json", "./icon.svg", "./bg.jpg"];
 
 self.addEventListener("install", e =>
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)))
