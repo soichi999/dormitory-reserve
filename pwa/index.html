@@ -549,8 +549,8 @@
     <h1>食堂まとめ予約</h1>
     <p style="font-size:13px;color:rgba(255,255,255,.7);">湘南藤沢国際学生寮</p>
     <div style="position:absolute;bottom:16px;right:16px;text-align:right;line-height:1.5;">
-      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);">ver.2.1.5</div>
-      <div style="font-size:10px;color:rgba(255,255,255,.6);">2026.7.29 16:50</div>
+      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);">ver.2.2.0</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.6);">2026.7.29 17:10</div>
     </div>
   </div>
 
@@ -889,10 +889,18 @@ function getToken() { return localStorage.getItem("pk_token") || ""; }
 function setToken(t, username) {
   localStorage.setItem("pk_token", t);
   localStorage.setItem("pk_username", username);
+  localStorage.setItem("pk_login_time", Date.now().toString());
 }
 function clearSession() {
   localStorage.removeItem("pk_token");
   localStorage.removeItem("pk_username");
+  localStorage.removeItem("pk_login_time");
+}
+function isSessionValid() {
+  const token = localStorage.getItem("pk_token");
+  const loginTime = parseInt(localStorage.getItem("pk_login_time") || "0", 10);
+  if (!token || !loginTime) return false;
+  return Date.now() - loginTime < 5 * 24 * 60 * 60 * 1000; // 5日
 }
 
 // ================================================================
@@ -1666,7 +1674,10 @@ document.addEventListener("DOMContentLoaded", () => {
   if (localStorage.getItem("darkMode") === "1") {
     document.body.classList.add("dark");
   }
-  // 開くたびに必ずパスキー認証を要求する（自動ログインなし）
+  // 5日以内のセッションがあれば自動ログイン
+  if (isSessionValid()) {
+    showMainApp();
+  }
   checkNotifications();
 });
 </script>
