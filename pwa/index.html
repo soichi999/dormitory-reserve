@@ -625,6 +625,27 @@
   </div>
 </div>
 
+<!-- 予約確認モーダル -->
+<div class="modal" id="modal-confirm">
+  <div class="modal-overlay" id="close-confirm-overlay"></div>
+  <div class="modal-panel">
+    <div class="modal-handle"></div>
+    <div class="modal-head">
+      <h3>予約の確認</h3>
+      <button class="modal-close" id="close-confirm">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div id="confirm-list" style="margin-bottom:16px;"></div>
+      <div id="confirm-total" style="font-weight:700;font-size:15px;color:#1d4ed8;text-align:right;margin-bottom:20px;"></div>
+      <div id="confirm-devmode" style="display:none;background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:8px 12px;font-size:12px;color:#92400e;font-weight:700;margin-bottom:16px;">開発者モード ON — 実際の予約はされません</div>
+      <button class="btn-primary" id="confirm-ok-btn">予約する</button>
+      <button class="btn-outline" id="confirm-cancel-btn" style="margin-top:8px;">キャンセル</button>
+    </div>
+  </div>
+</div>
+
 <!-- 開発者モードバー -->
 <div id="dev-bar" style="display:none;background:#fef3c7;border:1.5px solid #f59e0b;border-radius:10px;margin:8px 14px;padding:8px 14px;font-size:12px;font-weight:700;color:#92400e;text-align:center">
   開発者モード ON（実際の予約はされません）
@@ -905,7 +926,11 @@ function initMainApp() {
     if (id("f-remember").checked) saveCreds();
     else localStorage.removeItem("creds");
   });
-  id("reserve-btn").addEventListener("click", runReservations);
+  id("reserve-btn").addEventListener("click", showConfirm);
+  id("confirm-ok-btn").addEventListener("click", () => { closeModal("modal-confirm"); runReservations(); });
+  id("confirm-cancel-btn").addEventListener("click", () => closeModal("modal-confirm"));
+  id("close-confirm").addEventListener("click", () => closeModal("modal-confirm"));
+  id("close-confirm-overlay").addEventListener("click", () => closeModal("modal-confirm"));
 
   // ── ハンバーガーメニュー ──
   const drawer = document.getElementById("menu-drawer");
@@ -1097,6 +1122,32 @@ function loadCreds() {
 
 const id = x => document.getElementById(x);
 const f  = x => id(x)?.value?.trim() || "";
+
+// ── 予約確認ダイアログ ──
+function showConfirm() {
+  const items = [...document.querySelectorAll(".meal-cb:checked")]
+    .map(c => ({ date: c.dataset.date, meal: c.dataset.meal }))
+    .sort((a, b) => a.date !== b.date ? (a.date < b.date ? -1 : 1) : (a.meal === "breakfast" ? -1 : 1));
+  if (!items.length) return;
+
+  const list = id("confirm-list");
+  list.innerHTML = items.map(item => {
+    const d = new Date(item.date + "T00:00:00");
+    const label = `${d.getMonth()+1}/${d.getDate()}（${WEEKDAY[d.getDay()]}）`;
+    const mealLabel = item.meal === "breakfast" ? "朝食" : "夕食";
+    const price = item.meal === "breakfast" ? 300 : 500;
+    return `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:13px;">
+      <span>${label}　${mealLabel}</span>
+      <span style="color:#6b7280;">¥${price}</span>
+    </div>`;
+  }).join("");
+
+  const nb = items.filter(i => i.meal === "breakfast").length;
+  const nd = items.filter(i => i.meal === "dinner").length;
+  id("confirm-total").textContent = `合計 ${items.length}件　¥${(nb*300+nd*500).toLocaleString()}`;
+  id("confirm-devmode").style.display = devMode ? "block" : "none";
+  openModal("modal-confirm");
+}
 
 // ── 予約実行 ──
 async function runReservations() {

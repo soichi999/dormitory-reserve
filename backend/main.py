@@ -443,6 +443,11 @@ async def passkey_login_finish(req: PkLoginFinishReq):
 async def reserve(req: ReserveRequest, request: Request, authorization: str = Header(default="")):
     await verify_session(authorization)
 
+    # 停止フラグチェック
+    rows = await sb_get("app_config", {"key": "eq.reservation_enabled"})
+    if rows and rows[0]["value"] != "true":
+        raise HTTPException(503, "現在予約を停止しています。しばらくお待ちください。")
+
     ip = request.client.host
     now = time.time()
     day_ago = now - 86400
