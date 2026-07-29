@@ -1,4 +1,4 @@
-const CACHE = "shokudo-v3";
+const CACHE = "shokudo-v4";
 const ASSETS = ["./", "./index.html", "./manifest.json", "./icon.svg"];
 
 self.addEventListener("install", e =>
