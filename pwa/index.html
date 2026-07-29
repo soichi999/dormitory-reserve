@@ -1150,8 +1150,16 @@ function initMainApp() {
   function openNews() {
     const body = document.getElementById("news-body");
     const dark = document.body.classList.contains("dark");
-    body.innerHTML = NEWS.map((n, i) => `
-      <div style="padding:14px 0;${i < NEWS.length-1 ? "border-bottom:1px solid var(--border);" : ""}">
+    const weekly = NEWS[0];
+    const rest   = NEWS.slice(1);
+    const weeklyHtml = `
+      <div style="margin-bottom:14px;padding:12px 14px;border:1.5px solid var(--blue);border-radius:12px;background:${dark ? "#1e3a5f" : "#eff6ff"};">
+        <div style="font-size:11px;font-weight:700;color:var(--blue);margin-bottom:4px;">${weekly.date}　お知らせ</div>
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">${weekly.title}</div>
+        <div style="font-size:11px;color:var(--gray);line-height:1.7;">${weekly.body}</div>
+      </div>`;
+    const restHtml = rest.map((n, i) => `
+      <div style="padding:14px 0;${i < rest.length-1 ? "border-bottom:1px solid var(--border);" : ""}">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
           <span style="font-size:11px;font-weight:700;color:var(--blue);background:${dark ? "#1e3a5f" : "#eff6ff"};padding:3px 8px;border-radius:20px;">${n.date}</span>
           ${n.ver ? `<span style="font-size:11px;font-weight:600;color:var(--gray);">${n.ver}</span>` : ""}
@@ -1160,6 +1168,7 @@ function initMainApp() {
         <div style="font-size:12px;color:var(--gray);line-height:1.7;">${n.body}</div>
       </div>
     `).join("");
+    body.innerHTML = weeklyHtml + restHtml;
     // 既読にしてバッジを消す
     localStorage.setItem("lastReadNews", NEWS[0].date);
     document.getElementById("news-badge").style.display = "none";
