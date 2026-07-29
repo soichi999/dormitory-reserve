@@ -63,7 +63,7 @@
     body.dark thead th { background: #111827; color: var(--text-s); }
     body.dark tbody td { border-bottom-color: #374151; }
     body.dark tbody td:first-child { color: var(--text); }
-    body.dark .closed { color: var(--closed); }
+    body.dark .closed { color: #9ca3af; }
     body.dark .total-bar { background: #1e3a5f; color: #93c5fd; }
     body.dark .drawer-panel { background: #1f2937; }
     body.dark .drawer-header { border-bottom-color: var(--border); }
@@ -480,18 +480,20 @@
       accent-color: var(--blue);
       cursor: pointer;
     }
-    .closed { font-size: 10px; color: #d1d5db; }
+    .closed { font-size: 10px; color: #9ca3af; font-weight: 600; }
 
     /* ── Total ── */
     .total-bar {
       background: #eff6ff;
-      border-radius: 10px;
+      border: 1.5px solid #bfdbfe;
+      border-radius: 12px;
       margin: 12px 14px 0;
-      padding: 10px 16px;
-      font-size: 14px;
+      padding: 13px 16px;
+      font-size: 15px;
       color: #1d4ed8;
       font-weight: 700;
       text-align: center;
+      box-shadow: 0 1px 4px rgba(37,99,235,.1);
     }
 
     /* ── Reserve button ── */
@@ -793,24 +795,25 @@
 </div>
 
 <!-- ログイン情報 -->
-<div class="card" id="login-card">
-  <div class="card-title">ログイン情報</div>
-  <div class="field">
-    <label>メールアドレス</label>
-    <input type="email" id="f-email" placeholder="例: user@yahoo.ne.jp" inputmode="email" autocomplete="email">
+<div class="card" id="login-card" style="padding:12px 14px;">
+  <div class="card-title" style="margin-bottom:8px;">ログイン情報</div>
+  <div class="field" style="margin-bottom:8px;">
+    <label style="font-size:11px;">メールアドレス</label>
+    <input type="email" id="f-email" placeholder="例: user@yahoo.ne.jp" inputmode="email" autocomplete="email" style="padding:8px 12px;font-size:14px;">
   </div>
-  <div class="field">
-    <label>電話番号</label>
-    <input type="tel" id="f-phone" placeholder="例: 09012345678" inputmode="tel" autocomplete="tel">
+  <div style="display:flex;gap:8px;">
+    <div class="field" style="flex:1;margin-bottom:8px;">
+      <label style="font-size:11px;">電話番号</label>
+      <input type="tel" id="f-phone" placeholder="09012345678" inputmode="tel" autocomplete="tel" style="padding:8px 12px;font-size:14px;">
+    </div>
+    <div class="field" style="flex:1;margin-bottom:8px;">
+      <label style="font-size:11px;">号室＋氏名</label>
+      <input type="text" id="f-room" placeholder="101田中太郎" autocomplete="off" style="padding:8px 12px;font-size:14px;">
+    </div>
   </div>
-  <div class="field">
-    <label>号室番号＋氏名</label>
-    <input type="text" id="f-room" placeholder="例: 101田中太郎" autocomplete="off">
-  </div>
-  <label class="remember">
+  <label class="remember" style="font-size:12px;">
     <input type="checkbox" id="f-remember"> ログイン情報を保存する
   </label>
-  <p style="font-size:11px;color:#9ca3af;margin-top:6px;">ログイン情報・注文履歴はあなたのスマホ内にのみ保存されます。<br>外部サーバーには送信・保存されません。</p>
 </div>
 
 <!-- 予約グリッド -->
