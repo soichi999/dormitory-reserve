@@ -836,6 +836,16 @@
 </div><!-- #main-app -->
 
 <!-- 開発者モード パスワードモーダル -->
+<!-- LINEブラウザ警告 -->
+<div id="line-alert" style="display:none;position:fixed;inset:0;z-index:600;align-items:center;justify-content:center;padding:32px;">
+  <div style="position:absolute;inset:0;background:rgba(0,0,0,.5);" onclick="document.getElementById('line-alert').style.display='none'"></div>
+  <div style="position:relative;background:#fff;border-radius:16px;padding:24px 20px;max-width:300px;width:100%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.25);">
+    <div style="font-size:32px;margin-bottom:12px;">⚠️</div>
+    <div style="font-size:14px;font-weight:700;color:#111827;line-height:1.7;margin-bottom:20px;">LINEのブラウザでは動作しません。<br>SafariやChromeなどのブラウザで<br>このページを開いてください。</div>
+    <button onclick="document.getElementById('line-alert').style.display='none'" style="width:100%;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">閉じる</button>
+  </div>
+</div>
+
 <!-- エラー詳細モーダル -->
 <div id="error-detail-modal" style="display:none;position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;padding:24px;">
   <div style="position:absolute;inset:0;background:rgba(0,0,0,.5);" onclick="closeErrorDetail()"></div>
@@ -1046,6 +1056,7 @@ function showPasskeyScreen() {
 // パスキー画面 — イベント
 // ================================================================
 document.getElementById("pk-login-btn").addEventListener("click", async () => {
+  if (isLineBrowser()) { document.getElementById("line-alert").style.display = "flex"; return; }
   const btn = document.getElementById("pk-login-btn");
   const err = document.getElementById("pk-login-error");
   err.textContent = "";
@@ -1056,7 +1067,7 @@ document.getElementById("pk-login-btn").addEventListener("click", async () => {
     setToken(data.token, data.username);
     showMainApp();
   } catch(e) {
-    const lineMsg = isLineBrowser() ? `<div style="margin-bottom:6px;padding:8px 10px;background:#dcfce7;border-radius:8px;font-size:12px;color:#166534;font-weight:600;">LINEのブラウザでは動作しません。右上のメニューから「他のブラウザで開く」を選ぶか、SafariまたはChromeでこのページを開いてください。</div>` : "";
+    const lineMsg = "";
     err.innerHTML = lineMsg + errorHtml(jpError(e));
     btn.disabled = false;
     btn.innerHTML = `<span style="display:flex;align-items:center;justify-content:center;gap:8px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Face IDでログイン</span>`;
@@ -1064,6 +1075,7 @@ document.getElementById("pk-login-btn").addEventListener("click", async () => {
 });
 
 document.getElementById("pk-show-register").addEventListener("click", () => {
+  if (isLineBrowser()) { document.getElementById("line-alert").style.display = "flex"; return; }
   document.getElementById("pk-login-card").style.display = "none";
   document.getElementById("pk-register-card").style.display = "block";
 });
@@ -1087,7 +1099,7 @@ document.getElementById("pk-register-btn").addEventListener("click", async () =>
     setToken(data.token, data.username);
     showMainApp();
   } catch(e) {
-    const lineMsg = isLineBrowser() ? `<div style="margin-bottom:6px;padding:8px 10px;background:#dcfce7;border-radius:8px;font-size:12px;color:#166534;font-weight:600;">LINEのブラウザでは動作しません。右上のメニューから「他のブラウザで開く」を選ぶか、SafariまたはChromeでこのページを開いてください。</div>` : "";
+    const lineMsg = "";
     err.innerHTML = lineMsg + errorHtml(jpError(e));
     btn.disabled = false;
     btn.innerHTML = `<span style="display:flex;align-items:center;justify-content:center;gap:8px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>パスキーを登録（Face ID）</span>`;
