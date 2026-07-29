@@ -549,8 +549,8 @@
     <h1>食堂まとめ予約</h1>
     <p style="font-size:13px;color:rgba(255,255,255,.7);">湘南藤沢国際学生寮</p>
     <div style="position:absolute;bottom:16px;right:16px;text-align:right;line-height:1.5;">
-      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);">ver.2.5.0</div>
-      <div style="font-size:10px;color:rgba(255,255,255,.6);">2026.7.29 20:00</div>
+      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);">ver.2.5.1</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.6);">2026.7.29 20:15</div>
     </div>
   </div>
 
@@ -639,7 +639,7 @@
         <h2>食堂まとめ予約</h2>
         <p id="drawer-username"></p>
       </div>
-      <span style="font-size:10px;font-weight:600;color:var(--gray);padding-top:2px;">ver.2.5.0</span>
+      <span style="font-size:10px;font-weight:600;color:var(--gray);padding-top:2px;">ver.2.5.1</span>
     </div>
     <button class="drawer-item" id="open-history">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -953,6 +953,7 @@
       <tbody id="grid-body"></tbody>
     </table>
   </div>
+  <button id="open-menu-from-grid" style="display:block;width:100%;margin-top:10px;padding:9px;background:none;border:1.5px solid var(--border);border-radius:10px;font-size:13px;color:var(--gray);cursor:pointer;font-weight:600;">献立を確認</button>
 </div>
 
 <!-- 合計 -->
@@ -1462,8 +1463,7 @@ function initMainApp() {
   });
   document.getElementById("close-history").addEventListener("click", () => closeModal("modal-history"));
   document.getElementById("close-history-overlay").addEventListener("click", () => closeModal("modal-history"));
-  document.getElementById("open-menu-modal").addEventListener("click", () => {
-    drawer.classList.remove("open");
+  function openMenuModal() {
     const body = id("modal-menu-body");
     if (!weeklyMenu.length) {
       body.innerHTML = `<div style="color:var(--gray);font-size:13px;text-align:center;padding:20px 0;">献立が登録されていません</div>`;
@@ -1492,7 +1492,9 @@ function initMainApp() {
       body.innerHTML = html || `<div style="color:var(--gray);font-size:13px;text-align:center;padding:20px 0;">献立が登録されていません</div>`;
     }
     openModal("modal-menu");
-  });
+  }
+  document.getElementById("open-menu-modal").addEventListener("click", () => { drawer.classList.remove("open"); openMenuModal(); });
+  document.getElementById("open-menu-from-grid").addEventListener("click", openMenuModal);
   document.getElementById("close-menu").addEventListener("click", () => closeModal("modal-menu"));
   document.getElementById("close-menu-overlay").addEventListener("click", () => closeModal("modal-menu"));
   document.getElementById("open-guide").addEventListener("click", () => {
