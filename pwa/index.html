@@ -1281,11 +1281,11 @@ function initMainApp() {
 
 // ── 締切判定 ──
 function canB(d) {
-  const dl = new Date(d); dl.setDate(dl.getDate() - 1); dl.setHours(9,0,0,0);
+  const dl = new Date(d); dl.setDate(dl.getDate() - 1); dl.setHours(8,50,0,0);
   return Date.now() < dl.getTime();
 }
 function canD(d) {
-  const dl = new Date(d); dl.setHours(9,0,0,0);
+  const dl = new Date(d); dl.setHours(8,50,0,0);
   return Date.now() < dl.getTime();
 }
 
