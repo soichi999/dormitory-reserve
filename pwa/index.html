@@ -1005,6 +1005,11 @@ function errorHtml(msg) {
     + `<br><button onclick="openErrorDetail('${escaped}')" style="background:none;border:none;color:var(--blue);font-size:11px;cursor:pointer;padding:2px 0;margin-top:4px;text-decoration:underline;">詳細を見る</button>`;
 }
 
+// ── LINEブラウザ判定 ──
+function isLineBrowser() {
+  return /Line/i.test(navigator.userAgent);
+}
+
 // ── エラーメッセージの日本語化 ──
 function jpError(e) {
   const m = e.message || "";
@@ -1051,7 +1056,8 @@ document.getElementById("pk-login-btn").addEventListener("click", async () => {
     setToken(data.token, data.username);
     showMainApp();
   } catch(e) {
-    err.innerHTML = errorHtml(jpError(e));
+    const lineMsg = isLineBrowser() ? `<div style="margin-bottom:6px;padding:8px 10px;background:#dcfce7;border-radius:8px;font-size:12px;color:#166534;font-weight:600;">LINEのブラウザでは動作しません。右上のメニューから「他のブラウザで開く」を選ぶか、SafariまたはChromeでこのページを開いてください。</div>` : "";
+    err.innerHTML = lineMsg + errorHtml(jpError(e));
     btn.disabled = false;
     btn.innerHTML = `<span style="display:flex;align-items:center;justify-content:center;gap:8px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Face IDでログイン</span>`;
   }
@@ -1081,7 +1087,8 @@ document.getElementById("pk-register-btn").addEventListener("click", async () =>
     setToken(data.token, data.username);
     showMainApp();
   } catch(e) {
-    err.innerHTML = errorHtml(jpError(e));
+    const lineMsg = isLineBrowser() ? `<div style="margin-bottom:6px;padding:8px 10px;background:#dcfce7;border-radius:8px;font-size:12px;color:#166534;font-weight:600;">LINEのブラウザでは動作しません。右上のメニューから「他のブラウザで開く」を選ぶか、SafariまたはChromeでこのページを開いてください。</div>` : "";
+    err.innerHTML = lineMsg + errorHtml(jpError(e));
     btn.disabled = false;
     btn.innerHTML = `<span style="display:flex;align-items:center;justify-content:center;gap:8px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>パスキーを登録（Face ID）</span>`;
   }
