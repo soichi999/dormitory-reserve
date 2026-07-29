@@ -549,8 +549,8 @@
     <h1>食堂まとめ予約</h1>
     <p style="font-size:13px;color:rgba(255,255,255,.7);">湘南藤沢国際学生寮</p>
     <div style="position:absolute;bottom:16px;right:16px;text-align:right;line-height:1.5;">
-      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);">ver.2.5.1</div>
-      <div style="font-size:10px;color:rgba(255,255,255,.6);">2026.7.29 20:15</div>
+      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);">ver.2.6.0</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.6);">2026.7.29 21:00</div>
     </div>
   </div>
 
@@ -639,7 +639,7 @@
         <h2>食堂まとめ予約</h2>
         <p id="drawer-username"></p>
       </div>
-      <span style="font-size:10px;font-weight:600;color:var(--gray);padding-top:2px;">ver.2.5.1</span>
+      <span style="font-size:10px;font-weight:600;color:var(--gray);padding-top:2px;">ver.2.6.0</span>
     </div>
     <button class="drawer-item" id="open-history">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -1474,6 +1474,12 @@ function initMainApp() {
         html += rows.map((row, i) => {
           const d = new Date(row.date + "T00:00:00");
           const dl = `${d.getMonth()+1}/${d.getDate()}（${WEEKDAY[d.getDay()]}）`;
+          if (row.closed) {
+            return `<div style="padding:9px 0;${i < rows.length-1 ? "border-bottom:1px solid var(--border);" : ""}">
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">${dl}</div>
+              <div style="font-size:12px;color:#ef4444;font-weight:600;">休業日</div>
+            </div>`;
+          }
           return `<div style="padding:9px 0;${i < rows.length-1 ? "border-bottom:1px solid var(--border);" : ""}">
             <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">${dl}</div>
             <div style="font-size:12px;color:var(--gray);">朝食　${row.b || "—"}</div>
@@ -1630,29 +1636,67 @@ function buildMenuEditor() {
     const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
     const label = `${d.getMonth()+1}/${d.getDate()}（${WEEKDAY[d.getDay()]}）`;
     const existing = weeklyMenu.find(r => r.date === key) || {};
+    const isClosed = !!existing.closed;
     const header = week !== lastWeek ? `<div style="font-size:11px;font-weight:700;color:var(--blue);margin:${lastWeek ? "14px" : "0"} 0 6px;">${week}</div>` : "";
     lastWeek = week;
-    return `${header}<div style="margin-bottom:8px;">
-      <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;">${label}</div>
+    return `${header}<div style="margin-bottom:8px;" data-row-date="${key}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <div style="font-size:12px;font-weight:700;color:var(--text);">${label}</div>
+        <button type="button" data-closed-toggle="${key}" onclick="toggleMenuClosed('${key}',this)"
+          style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;border:1.5px solid ${isClosed ? "#ef4444" : "var(--border)"};background:${isClosed ? "#fee2e2" : "var(--bg)"};color:${isClosed ? "#ef4444" : "var(--gray)"};cursor:pointer;">
+          ${isClosed ? "休業中" : "休業日"}
+        </button>
+      </div>
       <div style="display:flex;gap:8px;">
         <input type="text" data-date="${key}" data-meal="b" placeholder="朝食" value="${existing.b || ""}"
-          style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;background:var(--bg);color:var(--text);outline:none;">
+          ${isClosed ? "disabled" : ""}
+          style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;background:${isClosed ? "var(--border)" : "var(--bg)"};color:${isClosed ? "var(--gray)" : "var(--text)"};outline:none;">
         <input type="text" data-date="${key}" data-meal="d" placeholder="夕食" value="${existing.d || ""}"
-          style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;background:var(--bg);color:var(--text);outline:none;">
+          ${isClosed ? "disabled" : ""}
+          style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;background:${isClosed ? "var(--border)" : "var(--bg)"};color:${isClosed ? "var(--gray)" : "var(--text)"};outline:none;">
       </div>
     </div>`;
   }).join("");
 }
 
+function toggleMenuClosed(date, btn) {
+  const row = btn.closest("[data-row-date]");
+  const inputs = [...row.querySelectorAll("input[data-date]")];
+  const nowClosed = btn.dataset.closedToggle && !!weeklyMenu.find(r => r.date === date && r.closed);
+  const willClose = !(btn.style.background.includes("fee2e2") || btn.textContent.trim() === "休業中");
+  if (willClose) {
+    btn.textContent = "休業中";
+    btn.style.borderColor = "#ef4444";
+    btn.style.background = "#fee2e2";
+    btn.style.color = "#ef4444";
+    inputs.forEach(inp => { inp.disabled = true; inp.style.background = "var(--border)"; inp.style.color = "var(--gray)"; });
+  } else {
+    btn.textContent = "休業日";
+    btn.style.borderColor = "var(--border)";
+    btn.style.background = "var(--bg)";
+    btn.style.color = "var(--gray)";
+    inputs.forEach(inp => { inp.disabled = false; inp.style.background = "var(--bg)"; inp.style.color = "var(--text)"; });
+  }
+}
+
 async function saveMenu() {
-  const inputs = [...id("menu-editor-fields").querySelectorAll("input[data-date]")];
+  const fields = id("menu-editor-fields");
+  const inputs = [...fields.querySelectorAll("input[data-date]")];
   const map = {};
   inputs.forEach(inp => {
     const date = inp.dataset.date;
     if (!map[date]) map[date] = { date };
     map[date][inp.dataset.meal] = inp.value.trim();
   });
-  const menu = Object.values(map).filter(r => r.b || r.d);
+  // 休業日フラグを反映
+  [...fields.querySelectorAll("[data-closed-toggle]")].forEach(btn => {
+    const date = btn.dataset.closedToggle;
+    if (btn.textContent.trim() === "休業中") {
+      if (!map[date]) map[date] = { date };
+      map[date].closed = true;
+    }
+  });
+  const menu = Object.values(map).filter(r => r.b || r.d || r.closed);
   const msg = id("menu-save-msg");
   try {
     const r = await fetch(`${API}/menu`, {
@@ -1759,11 +1803,13 @@ function buildGrid() {
     const cB = canB(d), cD = canD(d);
     const doneB = !devMode && history[`${key}_breakfast`];
     const doneD = !devMode && history[`${key}_dinner`];
+    const menuRow = weeklyMenu.find(r => r.date === key);
+    const isClosed = menuRow && menuRow.closed;
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${label}</td>
-      <td>${doneB ? '<span class="closed">予約済</span>' : cB ? `<input type="checkbox" class="meal-cb" data-date="${key}" data-meal="breakfast">` : '<span class="closed">締切</span>'}</td>
-      <td>${doneD ? '<span class="closed">予約済</span>' : cD ? `<input type="checkbox" class="meal-cb" data-date="${key}" data-meal="dinner">` : '<span class="closed">締切</span>'}</td>`;
+      <td>${isClosed ? '<span class="closed">休業</span>' : doneB ? '<span class="closed">予約済</span>' : cB ? `<input type="checkbox" class="meal-cb" data-date="${key}" data-meal="breakfast">` : '<span class="closed">締切</span>'}</td>
+      <td>${isClosed ? '<span class="closed">休業</span>' : doneD ? '<span class="closed">予約済</span>' : cD ? `<input type="checkbox" class="meal-cb" data-date="${key}" data-meal="dinner">` : '<span class="closed">締切</span>'}</td>`;
     tbody.appendChild(tr);
   });
   tbody.addEventListener("change", updateTotal);
