@@ -830,6 +830,17 @@
 
 </div><!-- #main-app -->
 
+<!-- 開発者モード パスワードモーダル -->
+<div id="dev-pw-modal" style="display:none;position:fixed;inset:0;z-index:500;align-items:center;justify-content:center;padding:24px;">
+  <div style="position:absolute;inset:0;background:rgba(0,0,0,.5);" onclick="document.getElementById('dev-pw-modal').style.display='none'"></div>
+  <div style="position:relative;background:var(--card);border-radius:16px;padding:24px 20px;max-width:300px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.2);">
+    <div style="font-size:15px;font-weight:700;margin-bottom:16px;color:var(--text);">開発者モード</div>
+    <input id="dev-pw-input" type="password" placeholder="パスワード" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;font-size:15px;outline:none;background:var(--bg);color:var(--text);margin-bottom:12px;">
+    <p id="dev-pw-error" style="color:var(--red);font-size:12px;margin-bottom:10px;display:none;">パスワードが違います</p>
+    <button onclick="submitDevPw()" class="btn-primary" style="padding:12px;">確認</button>
+  </div>
+</div>
+
 <!-- エラー詳細モーダル -->
 <div id="error-detail-modal" style="display:none;position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;padding:24px;">
   <div style="position:absolute;inset:0;background:rgba(0,0,0,.5);" onclick="closeErrorDetail()"></div>
@@ -1323,6 +1334,25 @@ function initMainApp() {
   });
 
   // ── 開発者モード ──
+  window.submitDevPw = function() {
+    const pw = id("dev-pw-input").value;
+    const errEl = id("dev-pw-error");
+    if (pw !== "sko1128@") {
+      errEl.style.display = "block";
+      id("dev-pw-input").value = "";
+      return;
+    }
+    document.getElementById("dev-pw-modal").style.display = "none";
+    id("dev-pw-input").value = "";
+    errEl.style.display = "none";
+    devMode = true;
+    id("dev-bar").style.display = "block";
+    id("dev-toggle").style.cssText = "background:#f59e0b;color:#fff;border:1px solid #f59e0b;font-size:11px;cursor:pointer;border-radius:6px;padding:3px 8px;";
+    id("dev-toggle").textContent = "開発者モード ON";
+    buildGrid(); updateTotal();
+  };
+  id("dev-pw-input").addEventListener("keydown", e => { if (e.key === "Enter") submitDevPw(); });
+
   id("dev-toggle").addEventListener("click", e => {
     e.preventDefault();
     drawer.classList.remove("open");
@@ -1331,16 +1361,12 @@ function initMainApp() {
       id("dev-bar").style.display = "none";
       id("dev-toggle").style.cssText = "background:none;color:#d1d5db;border:none;font-size:11px;cursor:pointer;padding:0;";
       id("dev-toggle").textContent = "開発者モード";
+      buildGrid(); updateTotal();
     } else {
-      const pw = prompt("パスワードを入力してください");
-      if (pw !== "sko1128@") { alert("パスワードが違います"); return; }
-      devMode = true;
-      id("dev-bar").style.display = "block";
-      id("dev-toggle").style.cssText = "background:#f59e0b;color:#fff;border:1px solid #f59e0b;font-size:11px;cursor:pointer;border-radius:6px;padding:3px 8px;";
-      id("dev-toggle").textContent = "開発者モード ON";
+      const modal = document.getElementById("dev-pw-modal");
+      modal.style.display = "flex";
+      setTimeout(() => id("dev-pw-input").focus(), 100);
     }
-    buildGrid();
-    updateTotal();
   });
 }
 
