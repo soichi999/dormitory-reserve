@@ -1206,6 +1206,11 @@ function showMainApp() {
 function showPasskeyScreen() {
   document.getElementById("main-app").style.display = "none";
   document.getElementById("passkey-screen").style.display = "flex";
+  // ボタン状態をリセット（認証中のまま残るのを防ぐ）
+  const btn = document.getElementById("pk-login-btn");
+  btn.disabled = false;
+  btn.innerHTML = `<span style="display:flex;align-items:center;justify-content:center;gap:8px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Face IDでログイン</span>`;
+  document.getElementById("pk-login-error").textContent = "";
 }
 
 // ================================================================
