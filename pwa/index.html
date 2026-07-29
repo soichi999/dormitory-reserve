@@ -805,8 +805,8 @@
       <thead>
         <tr>
           <th>日付</th>
-          <th>朝食<br><span class="sub">¥300</span></th>
-          <th>夕食<br><span class="sub">¥500</span></th>
+          <th>朝食<br><span class="sub">300円</span></th>
+          <th>夕食<br><span class="sub">500円</span></th>
         </tr>
       </thead>
       <tbody id="grid-body"></tbody>
@@ -816,6 +816,7 @@
 
 <!-- 合計 -->
 <div class="total-bar" id="total-bar">食事を選択してください</div>
+<div id="monthly-bar" style="text-align:right;padding:6px 18px 0;font-size:12px;color:var(--gray);"></div>
 
 <!-- 予約ボタン -->
 <button id="reserve-btn">予約する</button>
@@ -1080,6 +1081,7 @@ function initMainApp() {
     else localStorage.removeItem("creds");
   });
   id("reserve-btn").addEventListener("click", showConfirm);
+  setInterval(() => { buildGrid(); updateTotal(); }, 60000);
   id("confirm-ok-btn").addEventListener("click", () => { closeModal("modal-confirm"); runReservations(); });
   id("confirm-cancel-btn").addEventListener("click", () => closeModal("modal-confirm"));
   id("close-confirm").addEventListener("click", () => closeModal("modal-confirm"));
@@ -1208,7 +1210,7 @@ function initMainApp() {
         const d = new Date(date + "T00:00:00");
         const label = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,"0")}/${String(d.getDate()).padStart(2,"0")}（${WEEKDAY[d.getDay()]}）`;
         const mealLabel = meal === "breakfast" ? "朝食" : "夕食";
-        const price = meal === "breakfast" ? "¥300" : "¥500";
+        const price = meal === "breakfast" ? "300円" : "500円";
         return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f3f4f6;">
           <div>
             <div style="font-size:13px;font-weight:600;">${label}</div>
@@ -1301,6 +1303,35 @@ function canD(d) {
   return Date.now() < dl.getTime();
 }
 
+// ── 締切までの残り時間テキスト ──
+function countdownText(d, isBreakfast) {
+  const dl = new Date(d);
+  if (isBreakfast) dl.setDate(dl.getDate() - 1);
+  dl.setHours(8,50,0,0);
+  const diff = dl.getTime() - Date.now();
+  if (diff <= 0) return null;
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  if (h >= 24) return null; // 1日以上先は表示しない
+  if (h > 0) return `あと${h}時間${m}分`;
+  return `あと${m}分`;
+}
+
+// ── 今月合計 ──
+function updateMonthlyBar() {
+  const now = new Date();
+  const ym = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+  const h = getHistory();
+  let total = 0;
+  Object.keys(h).forEach(k => {
+    if (k.startsWith(ym)) {
+      total += k.endsWith("breakfast") ? B_PRICE : D_PRICE;
+    }
+  });
+  const el = document.getElementById("monthly-bar");
+  if (el) el.textContent = total > 0 ? `今月合計 ${total.toLocaleString()}円` : "";
+}
+
 // ── 予約可能日 ──
 function getReservableDays() {
   const today = new Date(); today.setHours(0,0,0,0);
@@ -1340,11 +1371,13 @@ function buildGrid() {
     const cB = canB(d), cD = canD(d);
     const doneB = !devMode && history[`${key}_breakfast`];
     const doneD = !devMode && history[`${key}_dinner`];
+    const cdB = cB ? countdownText(d, true) : null;
+    const cdD = cD ? countdownText(d, false) : null;
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${label}</td>
-      <td>${doneB ? '<span class="closed">予約済</span>' : cB ? `<input type="checkbox" class="meal-cb" data-date="${key}" data-meal="breakfast">` : '<span class="closed">締切</span>'}</td>
-      <td>${doneD ? '<span class="closed">予約済</span>' : cD ? `<input type="checkbox" class="meal-cb" data-date="${key}" data-meal="dinner">` : '<span class="closed">締切</span>'}</td>`;
+      <td>${doneB ? '<span class="closed">予約済</span>' : cB ? `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><input type="checkbox" class="meal-cb" data-date="${key}" data-meal="breakfast">${cdB ? `<span style="font-size:9px;color:var(--gray);">${cdB}</span>` : ""}</div>` : '<span class="closed">締切</span>'}</td>
+      <td>${doneD ? '<span class="closed">予約済</span>' : cD ? `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><input type="checkbox" class="meal-cb" data-date="${key}" data-meal="dinner">${cdD ? `<span style="font-size:9px;color:var(--gray);">${cdD}</span>` : ""}</div>` : '<span class="closed">締切</span>'}</td>`;
     tbody.appendChild(tr);
   });
   tbody.addEventListener("change", updateTotal);
@@ -1359,7 +1392,8 @@ function updateTotal() {
   document.getElementById("total-bar").textContent =
     total === 0
       ? "食事を選択してください"
-      : `朝食 ${nb}回 ＋ 夕食 ${nd}回 ＝ ${total}件（合計 ¥${(nb*B_PRICE + nd*D_PRICE).toLocaleString()}）`;
+      : `朝食 ${nb}回 ＋ 夕食 ${nd}回 ＝ ${total}件（合計 ${(nb*B_PRICE + nd*D_PRICE).toLocaleString()}円）`;
+  updateMonthlyBar();
   const loginOk = f("f-email") && f("f-phone") && f("f-room");
   document.getElementById("reserve-btn").disabled = total === 0 || !loginOk;
 }
@@ -1391,13 +1425,13 @@ function showConfirm() {
     const price = item.meal === "breakfast" ? 300 : 500;
     return `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:13px;">
       <span>${label}　${mealLabel}</span>
-      <span style="color:#6b7280;">¥${price}</span>
+      <span style="color:#6b7280;">${price}円</span>
     </div>`;
   }).join("");
 
   const nb = items.filter(i => i.meal === "breakfast").length;
   const nd = items.filter(i => i.meal === "dinner").length;
-  id("confirm-total").textContent = `合計 ${items.length}件　¥${(nb*300+nd*500).toLocaleString()}`;
+  id("confirm-total").textContent = `合計 ${items.length}件　${(nb*300+nd*500).toLocaleString()}円`;
   id("confirm-devmode").style.display = devMode ? "block" : "none";
   openModal("modal-confirm");
 }
