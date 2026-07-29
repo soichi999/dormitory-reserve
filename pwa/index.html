@@ -938,7 +938,7 @@ function initMainApp() {
   document.getElementById("drawer-overlay").addEventListener("click", () => drawer.classList.remove("open"));
 
   // ── モーダル ──
-  function openModal(id) {
+  window.openModal = function(id) {
     drawer.classList.remove("open");
     const modal = document.getElementById(id);
     modal.classList.add("open");
@@ -977,7 +977,7 @@ function initMainApp() {
       panel.style.transform = "";
     };
   }
-  function closeModal(id) {
+  window.closeModal = function(id) {
     const modal = document.getElementById(id);
     modal.classList.remove("open");
     if (modal._cleanup) { modal._cleanup(); modal._cleanup = null; }
