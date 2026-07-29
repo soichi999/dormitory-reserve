@@ -470,9 +470,12 @@ async def set_menu(req: MenuSaveReq, authorization: str = Header(default="")):
 # エンドポイント — アクセスログ
 # ================================================================
 
+class AccessLogReq(BaseModel):
+    username: str = ""
+
 @app.post("/log_access")
-async def log_access(authorization: str = Header(default="")):
-    username = None
+async def log_access(req: AccessLogReq, authorization: str = Header(default="")):
+    username = req.username or None
     try:
         token = authorization.replace("Bearer ", "").strip()
         now = datetime.now(timezone.utc).isoformat()
