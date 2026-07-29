@@ -466,6 +466,25 @@ async def set_menu(req: MenuSaveReq, authorization: str = Header(default="")):
     return {"ok": True}
 
 
+# ================================================================
+# エンドポイント — アクセスログ
+# ================================================================
+
+@app.post("/log_access")
+async def log_access(authorization: str = Header(default="")):
+    username = None
+    try:
+        token = authorization.replace("Bearer ", "").strip()
+        now = datetime.now(timezone.utc).isoformat()
+        rows = await sb_get("passkey_sessions", {"token": f"eq.{token}", "expires_at": f"gt.{now}"})
+        if rows:
+            username = rows[0]["user_id"]
+    except Exception:
+        pass
+    await sb_post("access_log", {"username": username})
+    return {"ok": True}
+
+
 @app.post("/reserve")
 async def reserve(req: ReserveRequest, request: Request, authorization: str = Header(default="")):
     await verify_session(authorization)
