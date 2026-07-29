@@ -21,16 +21,64 @@
       --card:   #ffffff;
       --red:    #dc2626;
       --green:  #059669;
+      --text:   #111827;
+      --text-s: #374151;
+      --closed: #d1d5db;
+    }
+
+    body.dark {
+      --blue:   #3b82f6;
+      --blue-d: #2563eb;
+      --gray:   #9ca3af;
+      --border: #374151;
+      --bg:     #111827;
+      --card:   #1f2937;
+      --red:    #f87171;
+      --green:  #34d399;
+      --text:   #f9fafb;
+      --text-s: #d1d5db;
+      --closed: #4b5563;
     }
 
     body {
       font-family: -apple-system, "Hiragino Sans", "Yu Gothic UI", sans-serif;
       background: var(--bg);
-      color: #111827;
+      color: var(--text);
       min-height: 100dvh;
       padding-bottom: env(safe-area-inset-bottom);
       overscroll-behavior-y: none;
     }
+
+    /* ── Dark mode overrides ── */
+    body.dark .pk-bottom { background: #1f2937; }
+    body.dark .pk-bottom h2 { color: var(--text); }
+    body.dark .pk-bottom .pk-sub { color: var(--gray); }
+    body.dark .pk-notice { background: #292524; border-color: #78350f; color: #fbbf24; }
+    body.dark .btn-outline { background: #1f2937; color: var(--blue); border-color: var(--blue); }
+    body.dark .field input { background: #111827; border-color: var(--border); color: var(--text); }
+    body.dark .field input::placeholder { color: #6b7280; }
+    body.dark .field input:focus { background: #111827; }
+    body.dark .field label { color: var(--gray); }
+    body.dark .remember { color: var(--gray); }
+    body.dark thead th { background: #111827; color: var(--text-s); }
+    body.dark tbody td { border-bottom-color: #374151; }
+    body.dark tbody td:first-child { color: var(--text); }
+    body.dark .closed { color: var(--closed); }
+    body.dark .total-bar { background: #1e3a5f; color: #93c5fd; }
+    body.dark .drawer-panel { background: #1f2937; }
+    body.dark .drawer-header { border-bottom-color: var(--border); }
+    body.dark .drawer-header h2 { color: var(--text); }
+    body.dark .drawer-header p { color: var(--gray); }
+    body.dark .drawer-item { color: var(--text); }
+    body.dark .drawer-item:active { background: #374151; }
+    body.dark .modal-panel { background: #1f2937; }
+    body.dark .modal-head { border-bottom-color: var(--border); }
+    body.dark .modal-head h3 { color: var(--text); }
+    body.dark .modal-close { background: #374151; }
+    body.dark .modal-body { color: var(--text-s); }
+    body.dark .modal-handle { background: #4b5563; }
+    body.dark #dev-bar { background: #292524; border-color: #78350f; color: #fbbf24; }
+    body.dark p[style*="9ca3af"] { color: #6b7280 !important; }
 
     /* ── Passkey screen ── */
     #passkey-screen {
@@ -536,6 +584,10 @@
       <h2>食堂まとめ予約</h2>
       <p id="drawer-username"></p>
     </div>
+    <button class="drawer-item" id="toggle-dark">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <span id="dark-label">ダークモードにする</span>
+    </button>
     <button class="drawer-item" id="open-history">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       注文履歴
@@ -932,6 +984,18 @@ function initMainApp() {
   id("close-confirm").addEventListener("click", () => closeModal("modal-confirm"));
   id("close-confirm-overlay").addEventListener("click", () => closeModal("modal-confirm"));
 
+  // ── ダークモード ──
+  function applyDark(dark) {
+    document.body.classList.toggle("dark", dark);
+    id("dark-label").textContent = dark ? "ライトモードにする" : "ダークモードにする";
+    localStorage.setItem("darkMode", dark ? "1" : "0");
+  }
+  applyDark(localStorage.getItem("darkMode") === "1");
+  document.getElementById("toggle-dark").addEventListener("click", () => {
+    drawer.classList.remove("open");
+    applyDark(!document.body.classList.contains("dark"));
+  });
+
   // ── ハンバーガーメニュー ──
   const drawer = document.getElementById("menu-drawer");
   document.getElementById("menu-btn").addEventListener("click", () => drawer.classList.add("open"));
@@ -1222,6 +1286,10 @@ async function runReservations() {
 document.addEventListener("DOMContentLoaded", () => {
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("./sw.js");
+  }
+  // ダークモードをパスキー画面でも適用
+  if (localStorage.getItem("darkMode") === "1") {
+    document.body.classList.add("dark");
   }
   // 開くたびに必ずパスキー認証を要求する（自動ログインなし）
 });
