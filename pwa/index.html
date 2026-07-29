@@ -1263,10 +1263,16 @@ function initMainApp() {
       const label = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,"0")}/${String(d.getDate()).padStart(2,"0")}（${WEEKDAY[d.getDay()]}）`;
       const mealLabel = meal === "breakfast" ? "朝食" : "夕食";
       const price = meal === "breakfast" ? "300円" : "500円";
+      const ts = h[k];
+      let orderedAt = "";
+      if (ts && ts !== true) {
+        const t = new Date(ts);
+        orderedAt = `予約日時: ${t.getMonth()+1}/${t.getDate()} ${String(t.getHours()).padStart(2,"0")}:${String(t.getMinutes()).padStart(2,"0")}`;
+      }
       return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
         <div>
           <div style="font-size:13px;font-weight:600;">${label}</div>
-          <div style="font-size:11px;color:#6b7280;margin-top:2px;">${mealLabel}</div>
+          <div style="font-size:11px;color:#6b7280;margin-top:2px;">${mealLabel}${orderedAt ? `　<span style="color:#9ca3af;">${orderedAt}</span>` : ""}</div>
         </div>
         <div style="font-size:13px;font-weight:700;color:var(--blue);">${price}</div>
       </div>`;
@@ -1435,7 +1441,7 @@ function getReservableDays() {
 function getHistory() { return JSON.parse(localStorage.getItem("orderHistory") || "{}"); }
 function saveHistory(date, meal) {
   const h = getHistory();
-  h[`${date}_${meal}`] = true;
+  h[`${date}_${meal}`] = new Date().toISOString();
   localStorage.setItem("orderHistory", JSON.stringify(h));
 }
 
