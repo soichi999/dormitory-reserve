@@ -816,7 +816,6 @@
 
 <!-- 合計 -->
 <div class="total-bar" id="total-bar">食事を選択してください</div>
-<div id="monthly-bar" style="text-align:right;padding:6px 18px 0;font-size:12px;color:var(--gray);"></div>
 
 <!-- 予約ボタン -->
 <button id="reserve-btn">予約する</button>
@@ -1205,6 +1204,12 @@ function initMainApp() {
     if (entries.length === 0) {
       body.innerHTML = '<p style="color:#9ca3af;text-align:center;padding:16px 0;">まだ注文履歴がありません</p>';
     } else {
+      const now = new Date();
+      const ym = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+      const monthlyTotal = entries.reduce((sum, k) => {
+        const [date, meal] = k.split("_");
+        return date.startsWith(ym) ? sum + (meal === "breakfast" ? B_PRICE : D_PRICE) : sum;
+      }, 0);
       body.innerHTML = entries.map(k => {
         const [date, meal] = k.split("_");
         const d = new Date(date + "T00:00:00");
@@ -1218,7 +1223,10 @@ function initMainApp() {
           </div>
           <div style="font-size:13px;font-weight:700;color:#2563eb;">${price}</div>
         </div>`;
-      }).join("") + `<div style="text-align:right;padding-top:12px;font-size:13px;font-weight:700;">合計 ${entries.length}件</div>`;
+      }).join("") + `<div style="padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:baseline;">
+        <span style="font-size:13px;font-weight:700;">合計 ${entries.length}件</span>
+        ${monthlyTotal > 0 ? `<span style="font-size:12px;color:var(--gray);">今月 ${monthlyTotal.toLocaleString()}円</span>` : ""}
+      </div>`;
     }
     openModal("modal-history");
   });
@@ -1393,7 +1401,6 @@ function updateTotal() {
     total === 0
       ? "食事を選択してください"
       : `朝食 ${nb}回 ＋ 夕食 ${nd}回 ＝ ${total}件（合計 ${(nb*B_PRICE + nd*D_PRICE).toLocaleString()}円）`;
-  updateMonthlyBar();
   const loginOk = f("f-email") && f("f-phone") && f("f-room");
   document.getElementById("reserve-btn").disabled = total === 0 || !loginOk;
 }
