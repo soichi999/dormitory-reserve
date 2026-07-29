@@ -64,7 +64,9 @@
     body.dark tbody td { border-bottom-color: #374151; }
     body.dark tbody td:first-child { color: var(--text); }
     body.dark .closed { color: #9ca3af; }
-    body.dark .total-bar { background: #1e3a5f; color: #93c5fd; }
+    body.dark #total-bar-wrap { background: #1e3a5f !important; border-color: #1e40af !important; }
+    body.dark #total-bar { color: #93c5fd !important; }
+    body.dark #deadline-info { border-top-color: #1e40af !important; }
     body.dark .drawer-panel { background: #1f2937; }
     body.dark .drawer-header { border-bottom-color: var(--border); }
     body.dark .drawer-header h2 { color: var(--text); }
@@ -491,18 +493,6 @@
     .closed { font-size: 10px; color: #9ca3af; font-weight: 600; }
 
     /* ── Total ── */
-    .total-bar {
-      background: #eff6ff;
-      border: 1.5px solid #bfdbfe;
-      border-radius: 12px;
-      margin: 12px 14px 0;
-      padding: 13px 16px;
-      font-size: 15px;
-      color: #1d4ed8;
-      font-weight: 700;
-      text-align: center;
-      box-shadow: 0 1px 4px rgba(37,99,235,.1);
-    }
 
     /* ── Reserve button ── */
     #reserve-btn {
@@ -559,8 +549,8 @@
     <h1>食堂まとめ予約</h1>
     <p style="font-size:13px;color:rgba(255,255,255,.7);">湘南藤沢国際学生寮</p>
     <div style="position:absolute;bottom:16px;right:16px;text-align:right;line-height:1.5;">
-      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);">ver.2.5.5</div>
-      <div style="font-size:10px;color:rgba(255,255,255,.6);">2026.7.29 16:25</div>
+      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);">ver.2.5.6</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.6);">2026.7.29 16:40</div>
     </div>
   </div>
 
@@ -832,11 +822,13 @@
 </div>
 
 <!-- 合計 -->
-<div class="total-bar" id="total-bar">食事を選択してください</div>
+<div class="total-bar" id="total-bar-wrap" style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:12px;margin:12px 14px 0;padding:13px 16px;box-shadow:0 1px 4px rgba(37,99,235,.1);">
+  <div id="total-bar" style="font-size:15px;color:#1d4ed8;font-weight:700;text-align:center;">食事を選択してください</div>
+  <div id="deadline-info" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid #bfdbfe;font-size:11px;color:var(--gray);"></div>
+</div>
 
 <!-- 予約ボタン -->
 <button id="reserve-btn">予約する</button>
-<div id="deadline-info" style="display:none;margin:6px 14px 0;padding:10px 14px;border-radius:10px;line-height:1.8;background:var(--card);"></div>
 
 <!-- 進捗・結果 -->
 <div class="card" id="progress-card">
@@ -1479,7 +1471,7 @@ function updateDeadlineInfo() {
       if (!cd) return;
       const ts = deadlineTime(key, isB);
       if (!groups[ts]) groups[ts] = { cd, labels: [] };
-      groups[ts].labels.push(`${dateLabel}${mealLabel}`);
+      groups[ts].labels.push(`${dateLabel} ${mealLabel}`);
     });
   });
   const entries = Object.values(groups);
@@ -1487,9 +1479,9 @@ function updateDeadlineInfo() {
   el.style.display = "block";
   el.innerHTML = entries.map(g => {
     const pills = g.labels.map(l =>
-      `<span style="font-size:11px;font-weight:700;color:${dark ? "#d1d5db" : "#eff6ff"};background:${dark ? "#374151" : "var(--blue)"};padding:3px 8px;border-radius:20px;white-space:nowrap;">${l}</span>`
-    ).join(" ");
-    return `<div style="margin-bottom:6px;">${pills}<br>&nbsp;<span style="font-size:12px;color:var(--gray);">締切まで${g.cd}</span></div>`;
+      `<span style="font-weight:600;color:${dark ? "#d1d5db" : "#1d4ed8"};">${l}</span>`
+    ).join("　");
+    return `<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${pills}　締切まで${g.cd}</div>`;
   }).join("");
 }
 
