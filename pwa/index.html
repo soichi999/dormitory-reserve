@@ -649,29 +649,6 @@
       プライバシーポリシー
     </button>
 
-    <!-- 通知設定 -->
-    <div class="drawer-section-label" style="margin-top:8px;border-top:1px solid var(--border);padding-top:14px;">通知</div>
-    <div class="notif-row">
-      <div class="notif-row-text">
-        <span>来週の食事可能通知</span>
-        <small>毎週木曜17時頃にお知らせ</small>
-      </div>
-      <label class="toggle-sw">
-        <input type="checkbox" id="notif-weekly">
-        <div class="toggle-track"></div>
-      </label>
-    </div>
-    <div class="notif-row">
-      <div class="notif-row-text">
-        <span>食事締切リマインダー</span>
-        <small>各食事の締切3時間前にお知らせ</small>
-      </div>
-      <label class="toggle-sw">
-        <input type="checkbox" id="notif-reminder">
-        <div class="toggle-track"></div>
-      </label>
-    </div>
-
     <!-- ダークモード -->
     <div style="border-top:1px solid var(--border);margin-top:8px;">
       <button class="drawer-item" id="toggle-dark" style="margin-top:8px;">
@@ -1157,8 +1134,8 @@ function initMainApp() {
   const NEWS = [weeklyNewsEntry(),
     {
       date: "2026.7.29", ver: "ver.2.1.0",
-      title: "通知・ダークモード・注文履歴・新着情報を追加",
-      body: "ハンバーガーメニューから注文履歴の確認、ダークモードへの切替、通知設定（来週の食事可能通知・締切リマインダー）のON/OFFができるようになりました。また予約ボタンを押したあとに確認ダイアログが表示されます。さらにヘッダー右上にベルアイコンを追加し、新着情報をそこから確認できるようにしました。",
+      title: "ダークモード・注文履歴・新着情報・予約確認を追加",
+      body: "ハンバーガーメニューから注文履歴の確認、ダークモードへの切替ができるようになりました。また予約ボタンを押したあとに確認ダイアログが表示されます。さらにヘッダー右上にベルアイコンを追加し、新着情報をそこから確認できるようにしました。",
     },
     {
       date: "2026.7.28", ver: "ver.2.0.0",
