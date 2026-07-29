@@ -1218,38 +1218,59 @@ function initMainApp() {
     document.getElementById("news-badge").style.display = "block";
   }
 
-  document.getElementById("open-history").addEventListener("click", () => {
-    // 履歴を描画してから開く
+  function renderHistory(filterYm) {
     const h = getHistory();
     const body = document.getElementById("history-body");
-    const entries = Object.keys(h).sort().reverse();
-    if (entries.length === 0) {
+    const allEntries = Object.keys(h).sort().reverse();
+
+    if (allEntries.length === 0) {
       body.innerHTML = '<p style="color:#9ca3af;text-align:center;padding:16px 0;">まだ注文履歴がありません</p>';
-    } else {
-      const now = new Date();
-      const ym = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
-      const monthlyTotal = entries.reduce((sum, k) => {
-        const [date, meal] = k.split("_");
-        return date.startsWith(ym) ? sum + (meal === "breakfast" ? B_PRICE : D_PRICE) : sum;
-      }, 0);
-      body.innerHTML = entries.map(k => {
-        const [date, meal] = k.split("_");
-        const d = new Date(date + "T00:00:00");
-        const label = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,"0")}/${String(d.getDate()).padStart(2,"0")}（${WEEKDAY[d.getDay()]}）`;
-        const mealLabel = meal === "breakfast" ? "朝食" : "夕食";
-        const price = meal === "breakfast" ? "300円" : "500円";
-        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f3f4f6;">
-          <div>
-            <div style="font-size:13px;font-weight:600;">${label}</div>
-            <div style="font-size:11px;color:#6b7280;margin-top:2px;">${mealLabel}</div>
-          </div>
-          <div style="font-size:13px;font-weight:700;color:#2563eb;">${price}</div>
-        </div>`;
-      }).join("") + `<div style="padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:baseline;">
-        <span style="font-size:13px;font-weight:700;">合計 ${entries.length}件</span>
-        ${monthlyTotal > 0 ? `<span style="font-size:12px;color:var(--gray);">今月 ${monthlyTotal.toLocaleString()}円</span>` : ""}
-      </div>`;
+      return;
     }
+
+    // 存在する年月を抽出
+    const months = [...new Set(allEntries.map(k => k.split("_")[0].slice(0,7)))].sort().reverse();
+    const activeYm = filterYm || months[0];
+
+    const btnHtml = months.map(ym => {
+      const [y, m] = ym.split("-");
+      const label = `${parseInt(m)}月`;
+      const active = ym === activeYm;
+      return `<button onclick="renderHistory('${ym}')" style="padding:5px 12px;border-radius:20px;border:1.5px solid ${active ? "var(--blue)" : "var(--border)"};background:${active ? "var(--blue)" : "transparent"};color:${active ? "#fff" : "var(--gray)"};font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">${label}</button>`;
+    }).join("");
+
+    const entries = allEntries.filter(k => k.split("_")[0].startsWith(activeYm));
+    const monthlyTotal = entries.reduce((sum, k) => {
+      return sum + (k.split("_")[1] === "breakfast" ? B_PRICE : D_PRICE);
+    }, 0);
+
+    const listHtml = entries.map(k => {
+      const [date, meal] = k.split("_");
+      const d = new Date(date + "T00:00:00");
+      const label = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,"0")}/${String(d.getDate()).padStart(2,"0")}（${WEEKDAY[d.getDay()]}）`;
+      const mealLabel = meal === "breakfast" ? "朝食" : "夕食";
+      const price = meal === "breakfast" ? "300円" : "500円";
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+        <div>
+          <div style="font-size:13px;font-weight:600;">${label}</div>
+          <div style="font-size:11px;color:#6b7280;margin-top:2px;">${mealLabel}</div>
+        </div>
+        <div style="font-size:13px;font-weight:700;color:var(--blue);">${price}</div>
+      </div>`;
+    }).join("");
+
+    body.innerHTML = `
+      <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;margin-bottom:4px;">${btnHtml}</div>
+      ${listHtml}
+      <div style="padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:baseline;">
+        <span style="font-size:13px;font-weight:700;">${entries.length}件</span>
+        <span style="font-size:12px;color:var(--gray);">${monthlyTotal.toLocaleString()}円</span>
+      </div>`;
+  }
+  window.renderHistory = renderHistory;
+
+  document.getElementById("open-history").addEventListener("click", () => {
+    renderHistory(null);
     openModal("modal-history");
   });
   document.getElementById("close-history").addEventListener("click", () => closeModal("modal-history"));
