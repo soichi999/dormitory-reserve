@@ -300,6 +300,7 @@
       border-radius: 2px;
       margin: 12px auto 0;
       flex-shrink: 0;
+      cursor: grab;
     }
     .modal-head {
       display: flex;
@@ -920,8 +921,50 @@ function initMainApp() {
   document.getElementById("drawer-overlay").addEventListener("click", () => drawer.classList.remove("open"));
 
   // ── モーダル ──
-  function openModal(id) { drawer.classList.remove("open"); document.getElementById(id).classList.add("open"); }
-  function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+  function openModal(id) {
+    drawer.classList.remove("open");
+    const modal = document.getElementById(id);
+    modal.classList.add("open");
+    // スワイプで閉じる
+    const panel = modal.querySelector(".modal-panel");
+    let startY = 0, dragging = false;
+    function onStart(e) {
+      startY = (e.touches ? e.touches[0].clientY : e.clientY);
+      dragging = true;
+      panel.style.transition = "none";
+    }
+    function onMove(e) {
+      if (!dragging) return;
+      const dy = (e.touches ? e.touches[0].clientY : e.clientY) - startY;
+      if (dy > 0) panel.style.transform = `translateY(${dy}px)`;
+    }
+    function onEnd(e) {
+      if (!dragging) return;
+      dragging = false;
+      panel.style.transition = "";
+      const dy = (e.changedTouches ? e.changedTouches[0].clientY : e.clientY) - startY;
+      if (dy > 80) {
+        panel.style.transform = "";
+        closeModal(id);
+      } else {
+        panel.style.transform = "";
+      }
+    }
+    panel.addEventListener("touchstart", onStart, { passive: true });
+    panel.addEventListener("touchmove", onMove, { passive: true });
+    panel.addEventListener("touchend", onEnd);
+    modal._cleanup = () => {
+      panel.removeEventListener("touchstart", onStart);
+      panel.removeEventListener("touchmove", onMove);
+      panel.removeEventListener("touchend", onEnd);
+      panel.style.transform = "";
+    };
+  }
+  function closeModal(id) {
+    const modal = document.getElementById(id);
+    modal.classList.remove("open");
+    if (modal._cleanup) { modal._cleanup(); modal._cleanup = null; }
+  }
   document.getElementById("open-history").addEventListener("click", () => {
     // 履歴を描画してから開く
     const h = getHistory();
