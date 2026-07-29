@@ -549,7 +549,7 @@
     <h1>食堂まとめ予約</h1>
     <p style="font-size:13px;color:rgba(255,255,255,.7);">湘南藤沢国際学生寮</p>
     <div style="position:absolute;bottom:16px;right:16px;text-align:right;line-height:1.5;">
-      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);">ver.2.2.3</div>
+      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);">ver.2.2.4</div>
       <div style="font-size:10px;color:rgba(255,255,255,.6);">2026.7.29 21:30</div>
     </div>
   </div>
@@ -639,7 +639,7 @@
         <h2>食堂まとめ予約</h2>
         <p id="drawer-username"></p>
       </div>
-      <span style="font-size:10px;font-weight:600;color:var(--gray);padding-top:2px;">ver.2.2.3</span>
+      <span style="font-size:10px;font-weight:600;color:var(--gray);padding-top:2px;">ver.2.2.4</span>
     </div>
     <button class="drawer-item" id="open-history">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -1425,17 +1425,20 @@ function initMainApp() {
       return `<button onclick="renderHistory('${ym}')" style="padding:5px 12px;border-radius:20px;border:1.5px solid ${active ? "var(--blue)" : "var(--border)"};background:${active ? "var(--blue)" : "transparent"};color:${active ? "#fff" : "var(--gray)"};font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">${label}</button>`;
     }).join("");
 
-    // 月別合計を集計してグラフ生成
-    const monthTotals = months.map(ym => ({
-      ym,
-      label: `${parseInt(ym.split("-")[1])}月`,
-      total: allEntries.filter(k => k.split("_")[0].startsWith(ym))
-                       .reduce((s, k) => s + (k.split("_")[1] === "breakfast" ? B_PRICE : D_PRICE), 0)
-    })).slice(0, 6).reverse(); // 最大6ヶ月、古い順
-    const maxTotal = Math.max(...monthTotals.map(m => m.total), 1);
+    // 直近4ヶ月を固定表示（データなしは0）、左から新しい順
+    const now = new Date();
+    const fixedMonths = Array.from({ length: 4 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const ym = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+      const label = `${d.getMonth()+1}月`;
+      const total = allEntries.filter(k => k.split("_")[0].startsWith(ym))
+                              .reduce((s, k) => s + (k.split("_")[1] === "breakfast" ? B_PRICE : D_PRICE), 0);
+      return { ym, label, total };
+    });
+    const maxTotal = Math.max(...fixedMonths.map(m => m.total), 1);
     const graphHtml = `<div style="margin-bottom:16px;padding:14px;background:var(--bg2,var(--bg));border:1.5px solid var(--border);border-radius:12px;">
       <div style="font-size:11px;font-weight:700;color:var(--gray);margin-bottom:10px;">月別支出</div>
-      ${monthTotals.map(({ ym, label, total }) => {
+      ${fixedMonths.map(({ ym, label, total }) => {
         const pct = Math.round(total / maxTotal * 100);
         const active = ym === activeYm;
         return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer;" onclick="renderHistory('${ym}')">
@@ -1477,7 +1480,7 @@ function initMainApp() {
     }).join("");
 
     body.innerHTML = `
-      ${months.length > 1 ? graphHtml : ""}
+      ${graphHtml}
       <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;margin-bottom:4px;">${btnHtml}</div>
       ${listHtml}
       <div style="padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:baseline;">
