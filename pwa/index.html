@@ -549,7 +549,7 @@
     <h1>食堂まとめ予約</h1>
     <p style="font-size:13px;color:rgba(255,255,255,.7);">湘南藤沢国際学生寮</p>
     <div style="position:absolute;bottom:16px;right:16px;text-align:right;line-height:1.5;">
-      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);">ver.2.2.5</div>
+      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);">ver.2.2.6</div>
       <div style="font-size:10px;color:rgba(255,255,255,.6);">2026.7.29 21:30</div>
     </div>
   </div>
@@ -639,7 +639,7 @@
         <h2>食堂まとめ予約</h2>
         <p id="drawer-username"></p>
       </div>
-      <span style="font-size:10px;font-weight:600;color:var(--gray);padding-top:2px;">ver.2.2.5</span>
+      <span style="font-size:10px;font-weight:600;color:var(--gray);padding-top:2px;">ver.2.2.6</span>
     </div>
     <button class="drawer-item" id="open-history">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -1480,10 +1480,14 @@ function initMainApp() {
       </div>`;
     }).join("");
 
+    const emptyHtml = entries.length === 0
+      ? `<div style="min-height:120px;display:flex;align-items:center;justify-content:center;color:var(--gray);font-size:13px;">この月の注文履歴はありません</div>`
+      : "";
+
     body.innerHTML = `
       ${graphHtml}
       <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;margin-bottom:4px;">${btnHtml}</div>
-      ${listHtml}
+      <div style="min-height:160px;">${emptyHtml}${listHtml}</div>
       <div style="padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:baseline;">
         <span style="font-size:13px;font-weight:700;">${entries.length}件</span>
         <span style="font-size:12px;color:var(--gray);">${monthlyTotal.toLocaleString()}円</span>
