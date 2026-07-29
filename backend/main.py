@@ -3,6 +3,7 @@
 GraphQL API を直接呼び出して食事を予約します（Playwright不使用）。
 """
 import asyncio
+import json
 import os
 import re
 import secrets
@@ -128,6 +129,9 @@ class ReserveRequest(BaseModel):
     login: LoginInfo
     items: list[ReserveItem]
     dry_run: bool = False
+
+class MenuSaveReq(BaseModel):
+    menu: list[dict]  # [{"date":"2026-07-28","b":"焼きそば","d":"回鍋肉"}, ...]
 
 class PkRegStartReq(BaseModel):
     username: str
@@ -438,6 +442,29 @@ async def passkey_login_finish(req: PkLoginFinishReq):
 # ================================================================
 # エンドポイント — 予約
 # ================================================================
+
+# ================================================================
+# エンドポイント — 献立
+# ================================================================
+
+@app.get("/menu")
+async def get_menu():
+    rows = await sb_get("app_config", {"key": "eq.weekly_menu"})
+    if not rows:
+        return {"menu": []}
+    return {"menu": json.loads(rows[0]["value"])}
+
+@app.post("/menu")
+async def set_menu(req: MenuSaveReq, authorization: str = Header(default="")):
+    await verify_session(authorization)
+    rows = await sb_get("app_config", {"key": "eq.weekly_menu"})
+    val = json.dumps(req.menu, ensure_ascii=False)
+    if rows:
+        await sb_patch("app_config", {"key": "eq.weekly_menu"}, {"value": val})
+    else:
+        await sb_post("app_config", {"key": "weekly_menu", "value": val})
+    return {"ok": True}
+
 
 @app.post("/reserve")
 async def reserve(req: ReserveRequest, request: Request, authorization: str = Header(default="")):

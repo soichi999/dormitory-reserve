@@ -549,8 +549,8 @@
     <h1>食堂まとめ予約</h1>
     <p style="font-size:13px;color:rgba(255,255,255,.7);">湘南藤沢国際学生寮</p>
     <div style="position:absolute;bottom:16px;right:16px;text-align:right;line-height:1.5;">
-      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);">ver.2.3.2</div>
-      <div style="font-size:10px;color:rgba(255,255,255,.6);">2026.7.29 18:40</div>
+      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);">ver.2.4.0</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.6);">2026.7.29 19:10</div>
     </div>
   </div>
 
@@ -639,7 +639,7 @@
         <h2>食堂まとめ予約</h2>
         <p id="drawer-username"></p>
       </div>
-      <span style="font-size:10px;font-weight:600;color:var(--gray);padding-top:2px;">ver.2.3.2</span>
+      <span style="font-size:10px;font-weight:600;color:var(--gray);padding-top:2px;">ver.2.4.0</span>
     </div>
     <button class="drawer-item" id="open-history">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -877,6 +877,14 @@
   開発者モード ON（実際の予約はされません）
 </div>
 
+<!-- 献立編集（開発者モード） -->
+<div id="menu-editor-card" style="display:none;" class="card">
+  <div class="card-title">献立を編集</div>
+  <div id="menu-editor-fields" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;"></div>
+  <button id="menu-save-btn" class="btn-primary" style="margin-bottom:8px;">保存する</button>
+  <div id="menu-save-msg" style="font-size:12px;color:var(--gray);text-align:center;display:none;"></div>
+</div>
+
 <!-- ログイン情報 -->
 <div class="card" id="login-card" style="padding:12px 14px;">
   <div class="card-title" style="margin-bottom:8px;">ログイン情報</div>
@@ -897,6 +905,14 @@
   <label class="remember" style="font-size:12px;">
     <input type="checkbox" id="f-remember"> ログイン情報を保存する
   </label>
+</div>
+
+<!-- 献立カード -->
+<div class="card" id="menu-card" style="display:none;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+    <div class="card-title" style="margin-bottom:0;">今週の献立</div>
+  </div>
+  <div id="menu-display"></div>
 </div>
 
 <!-- 予約グリッド -->
@@ -1155,6 +1171,7 @@ function showMainApp() {
   const username = localStorage.getItem("pk_username") || "";
   document.getElementById("drawer-username").textContent = username;
   initMainApp();
+  fetchMenu();
   // 初回のみ使い方ガイドを表示
   if (!localStorage.getItem("guideShown")) {
     document.getElementById("guide-overlay").style.display = "flex";
@@ -1456,6 +1473,9 @@ function initMainApp() {
     id("dev-bar").style.display = "block";
     id("dev-toggle").style.cssText = "background:#f59e0b;color:#fff;border:1px solid #f59e0b;font-size:11px;cursor:pointer;border-radius:6px;padding:3px 8px;";
     id("dev-toggle").textContent = "開発者モード ON";
+    id("menu-editor-card").style.display = "block";
+    buildMenuEditor();
+    id("menu-save-btn").onclick = saveMenu;
     buildGrid(); updateTotal();
   }
   id("dev-pw-submit").addEventListener("click", submitDevPw);
@@ -1468,6 +1488,7 @@ function initMainApp() {
       id("dev-toggle").style.cssText = "background:none;color:#d1d5db;border:none;font-size:11px;cursor:pointer;padding:0;";
       id("dev-toggle").textContent = "開発者モード";
       id("dev-pw-form").style.display = "none";
+      id("menu-editor-card").style.display = "none";
       drawer.classList.remove("open");
       buildGrid(); updateTotal();
     } else {
@@ -1480,6 +1501,86 @@ function initMainApp() {
 }
 
 // ── 締切判定 ──
+// ================================================================
+// 献立
+// ================================================================
+let weeklyMenu = []; // [{date, b, d}, ...]
+
+async function fetchMenu() {
+  try {
+    const r = await fetch(`${API}/menu`);
+    if (!r.ok) return;
+    const data = await r.json();
+    weeklyMenu = data.menu || [];
+    renderMenu();
+  } catch(e) {}
+}
+
+function renderMenu() {
+  const card = id("menu-card");
+  const display = id("menu-display");
+  if (!weeklyMenu.length) { card.style.display = "none"; return; }
+  card.style.display = "block";
+  display.innerHTML = weeklyMenu.map(row => {
+    const d = new Date(row.date + "T00:00:00");
+    const label = `${d.getMonth()+1}/${d.getDate()}（${WEEKDAY[d.getDay()]}）`;
+    return `<div style="display:flex;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;align-items:baseline;">
+      <span style="color:var(--gray);flex-shrink:0;width:80px;">${label}</span>
+      <span style="color:var(--text);">朝 ${row.b || "—"}　夜 ${row.d || "—"}</span>
+    </div>`;
+  }).join("").replace(/border-bottom[^;]+;(?=[^<]*<\/div>\s*$)/, "");
+}
+
+function buildMenuEditor() {
+  const fields = id("menu-editor-fields");
+  if (!fields) return;
+  const days = getReservableDays();
+  fields.innerHTML = days.map(d => {
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    const label = `${d.getMonth()+1}/${d.getDate()}（${WEEKDAY[d.getDay()]}）`;
+    const existing = weeklyMenu.find(r => r.date === key) || {};
+    return `<div>
+      <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;">${label}</div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" data-date="${key}" data-meal="b" placeholder="朝食" value="${existing.b || ""}"
+          style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;background:var(--bg);color:var(--text);outline:none;">
+        <input type="text" data-date="${key}" data-meal="d" placeholder="夕食" value="${existing.d || ""}"
+          style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;background:var(--bg);color:var(--text);outline:none;">
+      </div>
+    </div>`;
+  }).join("");
+}
+
+async function saveMenu() {
+  const inputs = [...id("menu-editor-fields").querySelectorAll("input[data-date]")];
+  const map = {};
+  inputs.forEach(inp => {
+    const date = inp.dataset.date;
+    if (!map[date]) map[date] = { date };
+    map[date][inp.dataset.meal] = inp.value.trim();
+  });
+  const menu = Object.values(map).filter(r => r.b || r.d);
+  const msg = id("menu-save-msg");
+  try {
+    const r = await fetch(`${API}/menu`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${getToken()}` },
+      body: JSON.stringify({ menu }),
+    });
+    if (!r.ok) throw new Error();
+    weeklyMenu = menu;
+    renderMenu();
+    msg.textContent = "保存しました";
+    msg.style.color = "var(--blue)";
+    msg.style.display = "block";
+    setTimeout(() => msg.style.display = "none", 3000);
+  } catch(e) {
+    msg.textContent = "保存に失敗しました";
+    msg.style.color = "var(--red)";
+    msg.style.display = "block";
+  }
+}
+
 function canB(d) {
   const dl = new Date(d); dl.setDate(dl.getDate() - 1); dl.setHours(8,50,0,0);
   return Date.now() < dl.getTime();
