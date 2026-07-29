@@ -930,14 +930,6 @@
   </label>
 </div>
 
-<!-- 献立カード -->
-<div class="card" id="menu-card" style="display:none;">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-    <div class="card-title" style="margin-bottom:0;">今週の献立</div>
-  </div>
-  <div id="menu-display"></div>
-</div>
-
 <!-- 予約グリッド -->
 <div class="card">
   <div class="card-title">予約する食事を選択</div>
@@ -1577,6 +1569,8 @@ async function fetchMenu() {
 }
 
 function renderMenu() {
+  // 献立カードは非表示（メニューから確認）
+  return;
   const card = id("menu-card");
   const display = id("menu-display");
   if (!weeklyMenu.length) { card.style.display = "none"; return; }
