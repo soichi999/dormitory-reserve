@@ -549,8 +549,8 @@
     <h1>食堂まとめ予約</h1>
     <p style="font-size:13px;color:rgba(255,255,255,.7);">湘南藤沢国際学生寮</p>
     <div style="position:absolute;bottom:16px;right:16px;text-align:right;line-height:1.5;">
-      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);">ver.2.4.0</div>
-      <div style="font-size:10px;color:rgba(255,255,255,.6);">2026.7.29 19:10</div>
+      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);">ver.2.4.1</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.6);">2026.7.29 19:30</div>
     </div>
   </div>
 
@@ -639,7 +639,7 @@
         <h2>食堂まとめ予約</h2>
         <p id="drawer-username"></p>
       </div>
-      <span style="font-size:10px;font-weight:600;color:var(--gray);padding-top:2px;">ver.2.4.0</span>
+      <span style="font-size:10px;font-weight:600;color:var(--gray);padding-top:2px;">ver.2.4.1</span>
     </div>
     <button class="drawer-item" id="open-history">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -1523,25 +1523,64 @@ function renderMenu() {
   const display = id("menu-display");
   if (!weeklyMenu.length) { card.style.display = "none"; return; }
   card.style.display = "block";
-  display.innerHTML = weeklyMenu.map(row => {
-    const d = new Date(row.date + "T00:00:00");
-    const label = `${d.getMonth()+1}/${d.getDate()}（${WEEKDAY[d.getDay()]}）`;
-    return `<div style="display:flex;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;align-items:baseline;">
-      <span style="color:var(--gray);flex-shrink:0;width:80px;">${label}</span>
-      <span style="color:var(--text);">朝 ${row.b || "—"}　夜 ${row.d || "—"}</span>
-    </div>`;
-  }).join("").replace(/border-bottom[^;]+;(?=[^<]*<\/div>\s*$)/, "");
+  const today = new Date(); today.setHours(0,0,0,0);
+  const dow = today.getDay();
+  const thisMonday = new Date(today);
+  thisMonday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
+  const nextMonday = new Date(thisMonday); nextMonday.setDate(thisMonday.getDate() + 7);
+  const nextSunday = new Date(nextMonday); nextSunday.setDate(nextMonday.getDate() + 6);
+  let html = "";
+  ["今週", "来週"].forEach((label, w) => {
+    const mon = new Date(thisMonday); mon.setDate(thisMonday.getDate() + w * 7);
+    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    const rows = weeklyMenu.filter(r => {
+      const d = new Date(r.date + "T00:00:00");
+      return d >= mon && d <= sun;
+    });
+    if (!rows.length) return;
+    html += `<div style="font-size:11px;font-weight:700;color:var(--blue);margin:${w > 0 ? "12px" : "0"} 0 6px;">${label}</div>`;
+    html += rows.map((row, i) => {
+      const d = new Date(row.date + "T00:00:00");
+      const dl = `${d.getMonth()+1}/${d.getDate()}（${WEEKDAY[d.getDay()]}）`;
+      const last = i === rows.length - 1;
+      return `<div style="display:flex;gap:8px;padding:7px 0;${last ? "" : "border-bottom:1px solid var(--border);"}font-size:12px;align-items:baseline;">
+        <span style="color:var(--gray);flex-shrink:0;width:80px;">${dl}</span>
+        <span style="color:var(--text);">朝 ${row.b || "—"}　夜 ${row.d || "—"}</span>
+      </div>`;
+    }).join("");
+  });
+  display.innerHTML = html;
+}
+
+function getMenuEditDays() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const dow = today.getDay(); // 0=日
+  // 今週の月曜
+  const thisMonday = new Date(today);
+  thisMonday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
+  const days = [];
+  for (let w = 0; w < 2; w++) {
+    for (let i = 0; i < 5; i++) {
+      const d = new Date(thisMonday);
+      d.setDate(thisMonday.getDate() + w * 7 + i);
+      days.push({ d, week: w === 0 ? "今週" : "来週" });
+    }
+  }
+  return days;
 }
 
 function buildMenuEditor() {
   const fields = id("menu-editor-fields");
   if (!fields) return;
-  const days = getReservableDays();
-  fields.innerHTML = days.map(d => {
+  const days = getMenuEditDays();
+  let lastWeek = "";
+  fields.innerHTML = days.map(({ d, week }) => {
     const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
     const label = `${d.getMonth()+1}/${d.getDate()}（${WEEKDAY[d.getDay()]}）`;
     const existing = weeklyMenu.find(r => r.date === key) || {};
-    return `<div>
+    const header = week !== lastWeek ? `<div style="font-size:11px;font-weight:700;color:var(--blue);margin:${lastWeek ? "14px" : "0"} 0 6px;">${week}</div>` : "";
+    lastWeek = week;
+    return `${header}<div style="margin-bottom:8px;">
       <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;">${label}</div>
       <div style="display:flex;gap:8px;">
         <input type="text" data-date="${key}" data-meal="b" placeholder="朝食" value="${existing.b || ""}"
