@@ -830,6 +830,18 @@
 
 </div><!-- #main-app -->
 
+<!-- エラー詳細モーダル -->
+<div id="error-detail-modal" style="display:none;position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;padding:24px;">
+  <div style="position:absolute;inset:0;background:rgba(0,0,0,.5);" onclick="closeErrorDetail()"></div>
+  <div id="error-detail-panel" style="position:relative;background:var(--card);border-radius:16px;padding:24px 20px 20px;max-width:320px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.2);">
+    <button onclick="closeErrorDetail()" style="position:absolute;top:12px;right:12px;background:#f3f4f6;border:none;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text);">詳細</div>
+    <div id="error-detail-text" style="font-size:13px;color:var(--text-s);line-height:1.8;"></div>
+  </div>
+</div>
+
 
 <script>
 const API     = "https://dormitory-reserve-oufp.onrender.com";
@@ -970,11 +982,21 @@ function findDetail(msg) {
   return null;
 }
 
+function openErrorDetail(text) {
+  const modal = document.getElementById("error-detail-modal");
+  document.getElementById("error-detail-text").innerHTML = text;
+  modal.style.display = "flex";
+}
+function closeErrorDetail() {
+  document.getElementById("error-detail-modal").style.display = "none";
+}
+
 function errorHtml(msg) {
   const detail = findDetail(msg);
-  const uid = Math.random().toString(36).slice(2);
+  const fullDetail = detail ? `${detail}<br><br>${CONTACT_MSG}` : CONTACT_MSG;
+  const escaped = fullDetail.replace(/'/g, "&#39;");
   return `<span>${msg}</span>`
-    + (detail ? `<br><button onclick="document.getElementById('ed-${uid}').style.display=document.getElementById('ed-${uid}').style.display==='none'?'block':'none'" style="background:none;border:none;color:var(--blue);font-size:11px;cursor:pointer;padding:2px 0;margin-top:4px;">詳細を見る ▼</button><div id="ed-${uid}" style="display:none;margin-top:6px;font-size:11px;color:#6b7280;line-height:1.7;background:#f9fafb;border-radius:8px;padding:8px 10px;">${detail}<br><br>${CONTACT_MSG}</div>` : `<br><span style="font-size:11px;color:#9ca3af;">${CONTACT_MSG}</span>`);
+    + `<br><button onclick="openErrorDetail('${escaped}')" style="background:none;border:none;color:var(--blue);font-size:11px;cursor:pointer;padding:2px 0;margin-top:4px;text-decoration:underline;">詳細を見る</button>`;
 }
 
 // ── エラーメッセージの日本語化 ──
