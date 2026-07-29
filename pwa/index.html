@@ -1121,27 +1121,27 @@ function initMainApp() {
 
   const NEWS = [weeklyNewsEntry(),
     {
-      date: "2026.7.29",
-      title: "新着情報・メニューを整理 (ver.2.1.0)",
-      body: "ヘッダー右上にベルアイコン（🔔）を追加し、新着情報をそこから確認できるようにしました。新着がある場合は赤いバッジが表示されます。またハンバーガーメニューの項目順序を整理し、通知設定とダークモードを下部にまとめました。",
+      date: "2026.7.29", ver: "ver.2.1.0",
+      title: "新着情報・メニュー構成を整理",
+      body: "ヘッダー右上にベルアイコンを追加し、新着情報をそこから確認できるようにしました。新着がある場合は赤いバッジが表示されます。またハンバーガーメニューの項目順序を整理し、通知設定とダークモードを下部にまとめました。",
     },
     {
-      date: "2026.7.29",
+      date: "2026.7.29", ver: "ver.2.0.0",
       title: "通知・ダークモード・注文履歴・予約確認を追加",
       body: "ハンバーガーメニューから注文履歴の確認、ダークモードへの切替、通知設定（来週の食事可能通知・締切リマインダー）のON/OFFができるようになりました。また予約ボタンを押したあとに確認ダイアログが表示され、誤操作を防ぎます。",
     },
     {
-      date: "2026.7.28",
+      date: "2026.7.28", ver: "ver.2.0.0",
       title: "パスキー（Face ID）認証を導入",
       body: "Face IDを使ったパスキー認証に対応しました。パスワード不要で安全にログインできます。認証情報はSupabaseサーバーに暗号化して保存されます。なお、LINEのブラウザ内ではパスキーが動作しないことがあるため、SafariやChromeでご利用ください。",
     },
     {
-      date: "2026.7.26",
+      date: "2026.7.26", ver: "ver.1.1.0",
       title: "利用規約・プライバシーポリシーを追加",
       body: "ハンバーガーメニューから利用規約とプライバシーポリシーが確認できるようになりました。本サービスはメールアドレス・電話番号・注文履歴をスマホ内にのみ保存しており、外部サーバーへの送信は行いません。",
     },
     {
-      date: "2026.7.13",
+      date: "2026.7.13", ver: "ver.1.0.0",
       title: "食堂まとめ予約 リリース",
       body: "湘南藤沢国際学生寮の食堂（Camel Order）への予約を週単位でまとめて行えるツールをリリースしました。メールアドレス・電話番号・号室番号を入力し、食べたい日の朝食・夕食にチェックを入れるだけで一括予約が完了します。",
     },
@@ -1152,8 +1152,9 @@ function initMainApp() {
     const dark = document.body.classList.contains("dark");
     body.innerHTML = NEWS.map((n, i) => `
       <div style="padding:14px 0;${i < NEWS.length-1 ? "border-bottom:1px solid var(--border);" : ""}">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
           <span style="font-size:11px;font-weight:700;color:var(--blue);background:${dark ? "#1e3a5f" : "#eff6ff"};padding:3px 8px;border-radius:20px;">${n.date}</span>
+          ${n.ver ? `<span style="font-size:11px;font-weight:600;color:var(--gray);">${n.ver}</span>` : ""}
         </div>
         <div style="font-size:14px;font-weight:700;margin-bottom:4px;">${n.title}</div>
         <div style="font-size:12px;color:var(--gray);line-height:1.7;">${n.body}</div>
