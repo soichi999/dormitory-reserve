@@ -1099,7 +1099,27 @@ function initMainApp() {
     document.getElementById(id).classList.remove("open");
   }
   // ── 新着情報 ──
-  const NEWS = [
+  // 毎週木曜に自動生成される来週分予約開始のお知らせ
+  function weeklyNewsEntry() {
+    const now = new Date();
+    const dow = now.getDay(); // 0=日 4=木
+    const daysFromThu = dow >= 4 ? dow - 4 : dow + 3;
+    const thu = new Date(now);
+    thu.setDate(now.getDate() - daysFromThu);
+    thu.setHours(0,0,0,0);
+    const mon = new Date(thu); mon.setDate(thu.getDate() + 4);
+    const fri = new Date(thu); fri.setDate(thu.getDate() + 8);
+    const fmt = d => `${d.getMonth()+1}/${d.getDate()}`;
+    const dateStr = `${thu.getFullYear()}.${thu.getMonth()+1}.${thu.getDate()}`;
+    return {
+      date: dateStr,
+      title: `来週分（${fmt(mon)}〜${fmt(fri)}）の予約が可能になりました`,
+      body: `毎週木曜日から翌週分の食事予約ができるようになります。予約締切は朝食が前日・夕食が当日の午前9時です。チェックボックスで食べたい日を選んで予約ボタンを押してください。`,
+      auto: true,
+    };
+  }
+
+  const NEWS = [weeklyNewsEntry(),
     {
       date: "2026.7.29",
       title: "新着情報・メニューを整理 (ver.2.1.0)",
