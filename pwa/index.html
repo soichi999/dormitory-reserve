@@ -840,7 +840,9 @@
 <div id="line-alert" style="display:none;position:fixed;inset:0;z-index:600;align-items:center;justify-content:center;padding:32px;">
   <div style="position:absolute;inset:0;background:rgba(0,0,0,.5);" onclick="document.getElementById('line-alert').style.display='none'"></div>
   <div style="position:relative;background:#fff;border-radius:16px;padding:24px 20px;max-width:300px;width:100%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.25);">
-    <div style="font-size:32px;margin-bottom:12px;">⚠️</div>
+    <div style="margin-bottom:12px;display:flex;justify-content:center;">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </div>
     <div style="font-size:14px;font-weight:700;color:#111827;line-height:1.7;margin-bottom:20px;">LINEのブラウザでは動作しません。<br>SafariやChromeなどのブラウザで<br>このページを開いてください。</div>
     <button onclick="document.getElementById('line-alert').style.display='none'" style="width:100%;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">閉じる</button>
   </div>
