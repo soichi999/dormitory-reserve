@@ -559,8 +559,8 @@
     <h1>食堂まとめ予約</h1>
     <p style="font-size:13px;color:rgba(255,255,255,.7);">湘南藤沢国際学生寮</p>
     <div style="position:absolute;bottom:16px;right:16px;text-align:right;line-height:1.5;">
-      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);">ver.2.5.3</div>
-      <div style="font-size:10px;color:rgba(255,255,255,.6);">2026.7.29 16:05</div>
+      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);">ver.2.5.4</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.6);">2026.7.29 16:15</div>
     </div>
   </div>
 
@@ -836,7 +836,7 @@
 
 <!-- 予約ボタン -->
 <button id="reserve-btn">予約する</button>
-<div id="deadline-info" style="display:none;margin:8px 14px 0;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;line-height:1.8;background:var(--bg);"></div>
+<div id="deadline-info" style="display:none;margin:6px 14px 0;padding:10px 14px;border-radius:10px;line-height:1.8;background:var(--card);"></div>
 
 <!-- 進捗・結果 -->
 <div class="card" id="progress-card">
@@ -1473,7 +1473,7 @@ function updateDeadlineInfo() {
   const groups = {}; // deadlineTime -> { cd, labels[] }
   getReservableDays().forEach(d => {
     const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-    const dateLabel = `${d.getMonth()+1}/${d.getDate()}（${WEEKDAY[d.getDay()]}）`;
+    const dateLabel = `${d.getMonth()+1}/${d.getDate()}`;
     [["朝", true], ["夜", false]].forEach(([mealLabel, isB]) => {
       const cd = countdownText(key, isB);
       if (!cd) return;
