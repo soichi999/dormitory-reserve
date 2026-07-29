@@ -549,8 +549,8 @@
     <h1>食堂まとめ予約</h1>
     <p style="font-size:13px;color:rgba(255,255,255,.7);">湘南藤沢国際学生寮</p>
     <div style="position:absolute;bottom:16px;right:16px;text-align:right;line-height:1.5;">
-      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);">ver.2.2.2</div>
-      <div style="font-size:10px;color:rgba(255,255,255,.6);">2026.7.29 17:35</div>
+      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);">ver.2.3.0</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.6);">2026.7.29 18:10</div>
     </div>
   </div>
 
@@ -639,7 +639,7 @@
         <h2>食堂まとめ予約</h2>
         <p id="drawer-username"></p>
       </div>
-      <span style="font-size:10px;font-weight:600;color:var(--gray);padding-top:2px;">ver.2.2.2</span>
+      <span style="font-size:10px;font-weight:600;color:var(--gray);padding-top:2px;">ver.2.3.0</span>
     </div>
     <button class="drawer-item" id="open-history">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -785,6 +785,52 @@
       <button class="btn-primary" id="confirm-ok-btn">予約する</button>
       <button class="btn-outline" id="confirm-cancel-btn" style="margin-top:8px;">キャンセル</button>
     </div>
+  </div>
+</div>
+
+<!-- 使い方ガイド -->
+<div id="guide-overlay" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.6);align-items:center;justify-content:center;padding:24px;">
+  <div style="background:var(--card);border-radius:20px;padding:24px;max-width:340px;width:100%;max-height:80dvh;overflow-y:auto;">
+    <div style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:16px;">使い方ガイド</div>
+    <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:20px;">
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div style="width:28px;height:28px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <span style="color:#fff;font-size:13px;font-weight:700;">1</span>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;">食事を選択</div>
+          <div style="font-size:12px;color:var(--gray);line-height:1.6;">予約したい日付の朝食・夕食にチェックを入れます。来週分まで一括で選べます。</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div style="width:28px;height:28px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <span style="color:#fff;font-size:13px;font-weight:700;">2</span>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;">予約する</div>
+          <div style="font-size:12px;color:var(--gray);line-height:1.6;">「予約する」ボタンで確認画面が開きます。内容を確認してから実行してください。</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div style="width:28px;height:28px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <span style="color:#fff;font-size:13px;font-weight:700;">3</span>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;">締切に注意</div>
+          <div style="font-size:12px;color:var(--gray);line-height:1.6;">朝食は前日・夕食は当日の 8:50 が締切です。締切が近い場合はカウントダウンが表示されます。</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div style="width:28px;height:28px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <span style="color:#fff;font-size:13px;font-weight:700;">4</span>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;">注文履歴</div>
+          <div style="font-size:12px;color:var(--gray);line-height:1.6;">右上のメニューから予約済みの一覧と今月の合計金額を確認できます。</div>
+        </div>
+      </div>
+    </div>
+    <button id="guide-close-btn" class="btn-primary">はじめる</button>
   </div>
 </div>
 
@@ -1071,6 +1117,10 @@ function showMainApp() {
   const username = localStorage.getItem("pk_username") || "";
   document.getElementById("drawer-username").textContent = username;
   initMainApp();
+  // 初回のみ使い方ガイドを表示
+  if (!localStorage.getItem("guideShown")) {
+    document.getElementById("guide-overlay").style.display = "flex";
+  }
 }
 
 function showPasskeyScreen() {
@@ -1682,6 +1732,11 @@ function checkNotifications() {
 // ================================================================
 // 起動
 // ================================================================
+document.getElementById("guide-close-btn").addEventListener("click", () => {
+  document.getElementById("guide-overlay").style.display = "none";
+  localStorage.setItem("guideShown", "1");
+});
+
 document.addEventListener("DOMContentLoaded", () => {
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("./sw.js");
