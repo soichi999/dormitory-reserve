@@ -1,10 +1,11 @@
 name: Refresh Weekly Menu
 
-# Camel Order（予約サイト）側に公開された献立を毎日取り込み、
+# Camel Order（予約サイト）側に公開された献立を週1回取り込み、
 # 献立表（今週・来週の献立）を自動更新する。
+# 木曜ごろに来週分の献立が解禁されるため、木曜に実行。
 on:
   schedule:
-    - cron: "0 13 * * *"  # 毎日 22:00 JST (UTC 13:00)
+    - cron: "0 13 * * 4"  # 毎週木曜 22:00 JST (UTC 13:00)
   workflow_dispatch: {}
 
 jobs:
