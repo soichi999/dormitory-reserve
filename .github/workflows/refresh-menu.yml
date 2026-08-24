@@ -1,0 +1,21 @@
+name: Refresh Weekly Menu
+
+# Camel Order（予約サイト）側に公開された献立を毎日取り込み、
+# 献立表（今週・来週の献立）を自動更新する。
+on:
+  schedule:
+    - cron: "0 13 * * *"  # 毎日 22:00 JST (UTC 13:00)
+  workflow_dispatch: {}
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call /menu/auto_refresh
+        run: |
+          curl -sS -o /dev/null -w "HTTP %{http_code}\n" -X POST \
+            "${API_URL}/menu/auto_refresh" \
+            -H "Authorization: Bearer ${MENU_REFRESH_SECRET}"
+        env:
+          API_URL: ${{ secrets.API_URL }}
+          MENU_REFRESH_SECRET: ${{ secrets.MENU_REFRESH_SECRET }}

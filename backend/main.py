@@ -173,6 +173,18 @@ query GetStoreMenus($deliveryStoreId: UUID!, $pickupTime: String!, $orderMethods
   }
 }"""
 
+Q_GET_MENU_TITLES = """
+query GetStoreMenus($deliveryStoreId: UUID!, $pickupTime: String!, $orderMethods: [OrderMethod!]!) {
+  deliveryStoreMenus(deliveryStoreId: $deliveryStoreId, pickupTime: $pickupTime) {
+    deliveryStoreCategories {
+      deliveryStoreItems(pickupTime: $pickupTime, orderMethods: $orderMethods) {
+        title { translation { ja } }
+        taxIncludedTakeoutPrice
+      }
+    }
+  }
+}"""
+
 M_UPSERT_CART = """
 mutation UpsertCart($cartInput: CartInput!) {
   upsertCart(input: $cartInput) { id }
@@ -235,6 +247,54 @@ async def get_menu_item(client: httpx.AsyncClient, pickup_time: str, is_breakfas
                 if si["taxIncludedTakeoutPrice"] == target_price:
                     return menu["id"], si["id"]
     raise Exception(f"{'朝食(¥300)' if is_breakfast else '夕食(¥500)'}メニューが見つかりません")
+
+
+# ================================================================
+# 献立の自動取得（Camel Order側のメニュー名を献立表に反映）
+# ================================================================
+
+def parse_dish_name(title: str) -> str:
+    # 例: "【8/26朝食】親子煮（Chicken egg binding）" → "親子煮"
+    name = re.sub(r"^【[^】]*】", "", title).strip()
+    name = re.sub(r"[（(]\s*[A-Za-z][^）)]*[）)]\s*$", "", name).strip()
+    return name
+
+
+async def get_dish_name(client: httpx.AsyncClient, pickup_time: str, target_price: int) -> str:
+    data = await gql(client, "GetStoreMenus", Q_GET_MENU_TITLES, {
+        "deliveryStoreId": DELIVERY_STORE,
+        "pickupTime": pickup_time,
+        "orderMethods": ["TAKE_OUT"],
+    })
+    for menu in data["deliveryStoreMenus"]:
+        for cat in menu["deliveryStoreCategories"]:
+            for si in cat["deliveryStoreItems"]:
+                if si["taxIncludedTakeoutPrice"] == target_price:
+                    return parse_dish_name(si["title"]["translation"]["ja"])
+    return ""
+
+
+async def fetch_weekly_menu_from_camel() -> list[dict]:
+    async with httpx.AsyncClient() as client:
+        store_data = await gql(client, "GetDeliveryStore", Q_GET_STORE, {"id": DELIVERY_STORE})
+        menu = []
+        for dp in store_data["deliveryStore"]["datePeriods"]:
+            date_compact = dp["date"]
+            date_iso = f"{date_compact[:4]}-{date_compact[4:6]}-{date_compact[6:]}"
+            b_time = d_time = None
+            for period in dp["periods"]:
+                hhmm = to_hhmm(period["startTime"])
+                h = int(hhmm[:2])
+                if 6 <= h < 12:
+                    b_time = date_compact + hhmm
+                elif h >= 17:
+                    d_time = date_compact + hhmm
+            b_name = await get_dish_name(client, b_time, 300) if b_time else ""
+            d_name = await get_dish_name(client, d_time, 500) if d_time else ""
+            if not b_name and not d_name:
+                continue  # 未公開の日は既存データを保持（上書きしない）
+            menu.append({"date": date_iso, "b": b_name, "d": d_name})
+        return menu
 
 
 # ================================================================
@@ -464,6 +524,32 @@ async def set_menu(req: MenuSaveReq, authorization: str = Header(default="")):
     else:
         await sb_post("app_config", {"key": "weekly_menu", "value": val})
     return {"ok": True}
+
+
+@app.post("/menu/auto_refresh")
+async def auto_refresh_menu(authorization: str = Header(default="")):
+    # Camel Order（予約サイト）側の献立をそのまま取り込む定期ジョブ用。
+    # ユーザーセッションではなく専用シークレットで認証する。
+    secret = os.environ.get("MENU_REFRESH_SECRET", "")
+    token = authorization.replace("Bearer ", "").strip()
+    if not secret or token != secret:
+        raise HTTPException(401, "unauthorized")
+
+    fetched = await fetch_weekly_menu_from_camel()
+
+    rows = await sb_get("app_config", {"key": "eq.weekly_menu"})
+    existing = json.loads(rows[0]["value"]) if rows else []
+    by_date = {m["date"]: m for m in existing}
+    for m in fetched:
+        by_date[m["date"]] = m
+    merged = sorted(by_date.values(), key=lambda m: m["date"])
+
+    val = json.dumps(merged, ensure_ascii=False)
+    if rows:
+        await sb_patch("app_config", {"key": "eq.weekly_menu"}, {"value": val})
+    else:
+        await sb_post("app_config", {"key": "weekly_menu", "value": val})
+    return {"ok": True, "updated": len(fetched)}
 
 
 # ================================================================
