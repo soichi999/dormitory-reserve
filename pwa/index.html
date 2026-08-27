@@ -546,6 +546,17 @@
 </head>
 <body>
 
+<!-- オフライン通知バナー -->
+<div id="offline-banner" style="display:none;position:relative;z-index:900;background:#f59e0b;color:#fff;font-size:12px;font-weight:700;text-align:center;padding:8px 12px;">
+  オフラインです。ネットワーク接続を確認してください
+</div>
+
+<!-- 「Webアプリとして開く」で起動している場合の警告バナー -->
+<div id="standalone-banner" style="display:none;position:relative;z-index:900;background:#dc2626;color:#fff;font-size:12px;font-weight:700;text-align:center;padding:8px 12px;line-height:1.6;">
+  「Webアプリとして開く」状態で起動しています。パスキー認証が正常に動作しない場合があります。
+  <button id="standalone-banner-faq" style="background:none;border:none;color:#fff;text-decoration:underline;font-weight:700;font-size:12px;cursor:pointer;padding:0;margin-left:4px;">対処法を見る</button>
+</div>
+
 <!-- ================================================================
      パスキー認証画面
      ================================================================ -->
@@ -1434,6 +1445,7 @@ function initMainApp() {
       body: "Google Chromeの拡張機能を使ったまとめ予約をリリースしました。現在のWebアプリ版の前身となるバージョンです。",
     },
   ];
+  window.NEWS = NEWS;
 
   function openNews() {
     const body = document.getElementById("news-body");
@@ -1470,6 +1482,8 @@ function initMainApp() {
   if (localStorage.getItem("lastReadNews") !== NEWS[0].date) {
     document.getElementById("news-badge").style.display = "block";
   }
+  requestNotifPermissionOnce();
+  checkUnreadNewsNotif();
 
   function renderHistory(filterYm) {
     const h = getHistory();
@@ -2169,6 +2183,50 @@ function checkNotifications() {
   }
 }
 
+// 未読お知らせのプッシュ通知（アプリを開いたタイミングで確認）
+function checkUnreadNewsNotif() {
+  if (typeof NEWS === "undefined" || !NEWS.length) return;
+  if (localStorage.getItem("notifyNews") === "0") return;
+  if (localStorage.getItem("lastReadNews") === NEWS[0].date) return; // 既読
+  if (localStorage.getItem("lastNewsNotif") === NEWS[0].date) return; // 通知済み
+  fireNotif(`新着情報：${NEWS[0].title}`, NEWS[0].body);
+  localStorage.setItem("lastNewsNotif", NEWS[0].date);
+}
+
+// 初回のみ通知許可をリクエスト
+function requestNotifPermissionOnce() {
+  if (!("Notification" in window)) return;
+  if (localStorage.getItem("notifPermAsked") === "1") return;
+  localStorage.setItem("notifPermAsked", "1");
+  if (Notification.permission === "default") {
+    Notification.requestPermission().then(() => {
+      checkNotifications();
+      checkUnreadNewsNotif();
+    });
+  }
+}
+
+// ================================================================
+// オフライン検知
+// ================================================================
+function updateOnlineStatus() {
+  document.getElementById("offline-banner").style.display = navigator.onLine ? "none" : "block";
+}
+window.addEventListener("online", updateOnlineStatus);
+window.addEventListener("offline", updateOnlineStatus);
+
+// ================================================================
+// 「Webアプリとして開く」（standalone起動）検知
+// ================================================================
+function isStandalone() {
+  return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+}
+
+function checkStandaloneWarning() {
+  if (!isStandalone()) return;
+  document.getElementById("standalone-banner").style.display = "block";
+}
+
 // ================================================================
 // 起動
 // ================================================================
@@ -2183,6 +2241,10 @@ document.getElementById("faq-close-btn").addEventListener("click", () => {
   document.getElementById("faq-overlay").style.display = "none";
 });
 
+document.getElementById("standalone-banner-faq").addEventListener("click", () => {
+  document.getElementById("faq-overlay").style.display = "flex";
+});
+
 document.addEventListener("DOMContentLoaded", () => {
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("./sw.js");
@@ -2191,6 +2253,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (localStorage.getItem("darkMode") === "1") {
     document.body.classList.add("dark");
   }
+  updateOnlineStatus();
+  checkStandaloneWarning();
   // 5日以内のセッションがあれば自動ログイン
   if (isSessionValid()) {
     showMainApp();
