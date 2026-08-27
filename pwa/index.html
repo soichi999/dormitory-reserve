@@ -557,6 +557,11 @@
   <button id="standalone-banner-faq" style="background:none;border:none;color:#fff;text-decoration:underline;font-weight:700;font-size:12px;cursor:pointer;padding:0;margin-left:4px;">対処法を見る</button>
 </div>
 
+<!-- LINEブラウザで開いている場合の警告バナー -->
+<div id="line-banner" style="display:none;position:relative;z-index:900;background:#dc2626;color:#fff;font-size:12px;font-weight:700;text-align:center;padding:8px 12px;line-height:1.6;">
+  LINEのブラウザで開いています。正常に動作しないことがあります。右上メニューからSafariやChromeで開き直してください。
+</div>
+
 <!-- ================================================================
      パスキー認証画面
      ================================================================ -->
@@ -2228,6 +2233,14 @@ function checkStandaloneWarning() {
 }
 
 // ================================================================
+// LINEブラウザ検知
+// ================================================================
+function checkLineBrowserWarning() {
+  if (!isLineBrowser()) return;
+  document.getElementById("line-banner").style.display = "block";
+}
+
+// ================================================================
 // 起動
 // ================================================================
 document.getElementById("guide-close-btn").addEventListener("click", () => {
@@ -2255,6 +2268,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   updateOnlineStatus();
   checkStandaloneWarning();
+  checkLineBrowserWarning();
   // 5日以内のセッションがあれば自動ログイン
   if (isSessionValid()) {
     showMainApp();
