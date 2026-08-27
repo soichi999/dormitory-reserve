@@ -551,12 +551,6 @@
   オフラインです。ネットワーク接続を確認してください
 </div>
 
-<!-- 「Webアプリとして開く」で起動している場合の警告バナー -->
-<div id="standalone-banner" style="display:none;position:relative;z-index:900;background:#dc2626;color:#fff;font-size:12px;font-weight:700;text-align:center;padding:8px 12px;line-height:1.6;">
-  「Webアプリとして開く」状態で起動しています。パスキー認証が正常に動作しない場合があります。
-  <button id="standalone-banner-faq" style="background:none;border:none;color:#fff;text-decoration:underline;font-weight:700;font-size:12px;cursor:pointer;padding:0;margin-left:4px;">対処法を見る</button>
-</div>
-
 <!-- LINEブラウザで開いている場合の警告バナー -->
 <div id="line-banner" style="display:none;position:relative;z-index:900;background:#dc2626;color:#fff;font-size:12px;font-weight:700;text-align:center;padding:8px 12px;line-height:1.6;">
   LINEのブラウザで開いています。正常に動作しないことがあります。右上メニューからSafariやChromeで開き直してください。
@@ -600,10 +594,6 @@
         <div class="pk-notice-row">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           <span>ホーム画面に追加する際は「Webアプリとして開く」を<b>オフ</b>にしてください。</span>
-        </div>
-        <div class="pk-notice-row" style="margin-top:4px;padding-top:10px;border-top:1px solid #fde68a;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          <span>登録・ログインできない場合は<b>伊藤颯一</b>までご連絡ください。</span>
         </div>
       </div>
       <button type="button" id="pk-open-faq" style="display:block;width:100%;margin-top:14px;background:none;border:none;color:var(--gray);font-size:12px;font-weight:600;text-decoration:underline;cursor:pointer;padding:4px;">よくある質問（FAQ）</button>
@@ -2227,18 +2217,6 @@ window.addEventListener("online", updateOnlineStatus);
 window.addEventListener("offline", updateOnlineStatus);
 
 // ================================================================
-// 「Webアプリとして開く」（standalone起動）検知
-// ================================================================
-function isStandalone() {
-  return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
-}
-
-function checkStandaloneWarning() {
-  if (!isStandalone()) return;
-  document.getElementById("standalone-banner").style.display = "block";
-}
-
-// ================================================================
 // LINEブラウザ検知
 // ================================================================
 function checkLineBrowserWarning() {
@@ -2260,10 +2238,6 @@ document.getElementById("faq-close-btn").addEventListener("click", () => {
   document.getElementById("faq-overlay").style.display = "none";
 });
 
-document.getElementById("standalone-banner-faq").addEventListener("click", () => {
-  document.getElementById("faq-overlay").style.display = "flex";
-});
-
 document.addEventListener("DOMContentLoaded", () => {
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("./sw.js");
@@ -2273,7 +2247,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.body.classList.add("dark");
   }
   updateOnlineStatus();
-  checkStandaloneWarning();
   checkLineBrowserWarning();
   // 5日以内のセッションがあれば自動ログイン
   if (isSessionValid()) {
