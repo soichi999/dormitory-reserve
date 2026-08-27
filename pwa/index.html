@@ -739,8 +739,8 @@
       ホーム画面に追加
     </button>
 
-    <!-- 通知設定 -->
-    <div style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px;">
+    <!-- 通知設定（Webアプリとして開いている場合のみ表示） -->
+    <div id="notify-section" style="display:none;border-top:1px solid var(--border);margin-top:8px;padding-top:8px;">
       <div style="font-size:11px;font-weight:700;color:var(--gray);padding:6px 20px;">通知</div>
       <div class="notify-row">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
@@ -1432,6 +1432,9 @@ function initMainApp() {
   }
   setupNotifyToggle("notify-weekly-toggle", "notifyWeekly", true);
   setupNotifyToggle("notify-reminder-toggle", "notifyMealReminder", false);
+  if (isStandalone()) {
+    id("notify-section").style.display = "block";
+  }
 
   // ── 右上のメニュー ──
   const drawer = document.getElementById("menu-drawer");
@@ -2187,7 +2190,13 @@ async function runReservations() {
 // ================================================================
 // 通知チェック（アプリを開いたタイミングで確認）
 // ================================================================
+// 「Webアプリとして開く」でホーム画面から起動しているか（standalone起動）
+function isStandalone() {
+  return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+}
+
 function fireNotif(title, body) {
+  if (!isStandalone()) return;
   if (!("Notification" in window) || Notification.permission !== "granted") return;
   new Notification(title, { body, icon: "./icon.svg" });
 }
@@ -2203,29 +2212,29 @@ function checkNotifications() {
   const hour    = now.getHours();
   const todayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
 
-  // 来週の食事可能通知：木曜 17:00〜23:59
-  if (weekly && dow === 4 && hour >= 17) {
+  // 来週の食事可能通知：毎週木曜 9:00〜9:59
+  if (weekly && dow === 4 && hour === 9) {
     if (localStorage.getItem("lastWeeklyNotif") !== todayKey) {
       fireNotif("食堂まとめ予約", "来週の食事予約が可能になりました！");
       localStorage.setItem("lastWeeklyNotif", todayKey);
     }
   }
 
-  // 食事締切リマインダー：締切3時間前（= 各日 06:00〜06:59）
-  if (reminder && hour === 6) {
+  // 食事締切リマインダー：締切50分前（= 各日 08:00〜08:59、締切8:50）
+  if (reminder && hour === 8) {
     if (localStorage.getItem("lastReminderNotif") !== todayKey) {
       const tomorrow = new Date(now);
       tomorrow.setDate(tomorrow.getDate() + 1);
       const tDow = tomorrow.getDay();
-      // 明日が平日 → 朝食締切は「今日の9時」なので3時間前 = 今朝6時
+      // 明日が平日 → 朝食締切は「今日の8:50」なので50分前 = 今朝8:00
       if (tDow >= 1 && tDow <= 5) {
         fireNotif("食堂まとめ予約",
-          `明日（${tomorrow.getMonth()+1}/${tomorrow.getDate()}）朝食の予約締切は今日9:00です`);
+          `明日（${tomorrow.getMonth()+1}/${tomorrow.getDate()}）朝食の予約締切は今日8:50です`);
       }
-      // 今日が平日 → 夕食締切は「今日の9時」
+      // 今日が平日 → 夕食締切は「今日の8:50」
       if (dow >= 1 && dow <= 5) {
         fireNotif("食堂まとめ予約",
-          `本日（${now.getMonth()+1}/${now.getDate()}）夕食の予約締切は今日9:00です`);
+          `本日（${now.getMonth()+1}/${now.getDate()}）夕食の予約締切は今日8:50です`);
       }
       localStorage.setItem("lastReminderNotif", todayKey);
     }
@@ -2242,8 +2251,9 @@ function checkUnreadNewsNotif() {
   localStorage.setItem("lastNewsNotif", NEWS[0].date);
 }
 
-// 初回のみ通知許可をリクエスト
+// 初回のみ通知許可をリクエスト（Webアプリとして開いている場合のみ）
 function requestNotifPermissionOnce() {
+  if (!isStandalone()) return;
   if (!("Notification" in window)) return;
   if (localStorage.getItem("notifPermAsked") === "1") return;
   localStorage.setItem("notifPermAsked", "1");
